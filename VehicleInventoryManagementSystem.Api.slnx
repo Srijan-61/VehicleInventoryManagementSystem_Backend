@@ -1,13 +1,3 @@
 <Solution>
-  <Project Path="../VehicleInventoryManagementSystem.Application/VehicleInventoryManagementSystem.Application.csproj" Id="45c8b452-5a36-4b16-a3ab-0c940019761c">
-    <BuildDependency Project="../VehicleInventoryManagementSystem.Domain/VehicleInventoryManagementSystem.Domain.csproj" />
-  </Project>
-  <Project Path="../VehicleInventoryManagementSystem.Domain/VehicleInventoryManagementSystem.Domain.csproj" Id="f18d463e-a2c0-49b8-ad97-0373327f1485" />
-  <Project Path="../VehicleInventoryManagementSystem.Infrastructure/VehicleInventoryManagementSystem.Infrastructure.csproj" Id="1d5fbb1f-83b7-4cb1-ba6a-04ab79232fcd">
-    <BuildDependency Project="../VehicleInventoryManagementSystem.Application/VehicleInventoryManagementSystem.Application.csproj" />
-  </Project>
-  <Project Path="VehicleInventoryManagementSystem.Api.csproj">
-    <BuildDependency Project="../VehicleInventoryManagementSystem.Application/VehicleInventoryManagementSystem.Application.csproj" />
-    <BuildDependency Project="../VehicleInventoryManagementSystem.Infrastructure/VehicleInventoryManagementSystem.Infrastructure.csproj" />
-  </Project>
+  <Project Path="VehicleInventoryManagementSystem.Api.csproj" />
 </Solution>
