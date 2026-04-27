@@ -4,7 +4,7 @@ using System.Text;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Services
 {
-    internal class Class1
+    internal class StaffService
     {
     }
 }
