@@ -20,4 +20,9 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="10.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\VehicleInventoryManagementSystem.Domain\VehicleInventoryManagementSystem.Domain.csproj" />
+    <ProjectReference Include="..\VehicleInventoryManagementSystem.Application\VehicleInventoryManagementSystem.Application.csproj" />
+  </ItemGroup>
+
 </Project>
