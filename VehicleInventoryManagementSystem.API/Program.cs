@@ -63,7 +63,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:1234") // Your exact frontend URL
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Useful for auth tokens/cookies
+    });
+});
 
 var app = builder.Build();
 
@@ -74,6 +83,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 

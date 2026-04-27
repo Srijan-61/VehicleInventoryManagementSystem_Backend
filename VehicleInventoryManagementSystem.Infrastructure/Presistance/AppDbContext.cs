@@ -32,6 +32,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Presistance
         public DbSet<PurchaseItem> PurchaseItems { get; set; }
         public DbSet<SalesInvoice> SalesInvoices { get; set; }
         public DbSet<SalesItem> SalesItems { get; set; }
+        public object AdminProfiles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

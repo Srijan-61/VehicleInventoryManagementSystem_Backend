@@ -7,6 +7,6 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IServices
 {
     public interface IStaffService
     {
-        Task<bool> RegisterStaffAsync(RegisterStaffDto dto);
+        Task<(bool Succeeded, IEnumerable<string> Errors)> RegisterStaffAsync(RegisterStaffDto dto);
     }
 }
