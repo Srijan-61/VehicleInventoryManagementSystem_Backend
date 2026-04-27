@@ -23,15 +23,14 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             _context = context;
         }
 
-        public async Task<bool> RegisterStaffAsync(RegisterStaffDto dto)
+        public async Task<(bool Succeeded, IEnumerable<string> Errors)> RegisterStaffAsync(RegisterStaffDto dto)
         {
-            // Transaction ensures complete rollback if either Identity or StaffProfile insertion fails
             using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
                 var user = new User
                 {
+                    Id = Guid.NewGuid().ToString(),
                     UserName = dto.Email,
                     Email = dto.Email,
                     PhoneNumber = dto.PhoneNumber,
@@ -40,31 +39,33 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     Created_At = DateTime.UtcNow
                 };
 
-                // Create Identity User
+                // 1. Try to create the User
                 var userResult = await _userManager.CreateAsync(user, dto.Password);
-                if (!userResult.Succeeded) return false;
+                if (!userResult.Succeeded)
+                {
+                    return (false, userResult.Errors.Select(e => e.Description));
+                }
 
-                // Assign Role
+                // 2. Try to add the Role
                 var roleResult = await _userManager.AddToRoleAsync(user, "Staff");
                 if (!roleResult.Succeeded)
                 {
                     await transaction.RollbackAsync();
-                    return false;
+                    return (false, roleResult.Errors.Select(e => e.Description));
                 }
 
-                // Create Staff Profile via Repository
+                // 3. Create the Profile
                 var staff = new Staff { User_Id = user.Id };
                 await _staffRepository.AddStaffAsync(staff);
                 await _staffRepository.SaveChangesAsync();
 
-                // Commit Transaction
                 await transaction.CommitAsync();
-                return true;
+                return (true, Enumerable.Empty<string>());
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return false;
+                return (false, new List<string> { ex.Message });
             }
         }
     }
