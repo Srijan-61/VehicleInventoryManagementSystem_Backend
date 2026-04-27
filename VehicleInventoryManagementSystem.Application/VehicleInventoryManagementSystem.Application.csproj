@@ -18,4 +18,12 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Interfaces\IServices\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VehicleInventoryManagementSystem.Domain\VehicleInventoryManagementSystem.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
