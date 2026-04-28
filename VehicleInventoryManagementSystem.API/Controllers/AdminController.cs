@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VehicleInventoryManagementSystem.Application.DTOs;
+using VehicleInventoryManagementSystem.Application.DTOs.Auth;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 
 namespace VehicleInventoryManagementSystem.API.Controllers
