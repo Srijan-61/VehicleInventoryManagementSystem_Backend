@@ -40,6 +40,12 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IStaffService, StaffService>();
 
+builder.Services.AddScoped<ICustomerSelfRepository, CustomerSelfRepository>();
+builder.Services.AddScoped<ISalesRepository, SalesRepository>();
+
+builder.Services.AddScoped<ICustomerSelfService, CustomerSelfService>();
+builder.Services.AddScoped<ISalesService, SalesService>();
+
 // 4. Configure Authentication & JWT
 builder.Services.AddAuthentication(options =>
 {
@@ -67,7 +73,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:1234") // Your exact frontend URL
+        policy.WithOrigins("http://localhost:1234") //  frontend URL
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials(); // Useful for auth tokens/cookies
