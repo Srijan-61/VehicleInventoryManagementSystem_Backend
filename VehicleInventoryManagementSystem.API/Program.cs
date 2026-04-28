@@ -46,6 +46,9 @@ builder.Services.AddScoped<ISalesRepository, SalesRepository>();
 builder.Services.AddScoped<ICustomerSelfService, CustomerSelfService>();
 builder.Services.AddScoped<ISalesService, SalesService>();
 
+builder.Services.AddScoped<IAdminPartsRepository, AdminPartsRepository>();
+builder.Services.AddScoped<IAdminPartsService, AdminPartsService>();
+
 // 4. Configure Authentication & JWT
 builder.Services.AddAuthentication(options =>
 {
