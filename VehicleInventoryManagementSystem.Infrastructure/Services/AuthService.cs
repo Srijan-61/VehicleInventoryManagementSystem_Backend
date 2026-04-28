@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using VehicleInventoryManagementSystem.Application.DTOs;
+using VehicleInventoryManagementSystem.Application.DTOs.Auth;
 using VehicleInventoryManagementSystem.Application.Interfaces;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 using VehicleInventoryManagementSystem.Domain.Models;
