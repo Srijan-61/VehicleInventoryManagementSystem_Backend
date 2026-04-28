@@ -1,7 +1,0 @@
-# Use this workspace to collaborate
-workspace:
-  id: af638b12-24a4-47e4-95b7-9f3735037ba0
-
-localResources:
-  specs:
-    - ..\VehicleInventoryManagementSystem.API\obj\Debug\net10.0\EndpointInfo\VehicleInventoryManagementSystem.API.json
