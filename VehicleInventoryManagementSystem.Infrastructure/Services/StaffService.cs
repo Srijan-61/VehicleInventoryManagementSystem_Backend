@@ -119,13 +119,14 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
         }
 
         // Creates a sales invoice, updates part stock, and applies loyalty discounts if applicable
-        public async Task<(bool Succeeded, string Message, IEnumerable<string> Errors)> CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto)
+        public async Task<(bool Succeeded, SalesInvoiceResultDto? Data, IEnumerable<string> Errors)> CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 decimal subTotal = 0;
                 var salesItems = new List<SalesItem>();
+                var resultItems = new List<SalesItemResultDto>(); // For the response
 
                 foreach (var item in dto.Items)
                 {
@@ -136,14 +137,16 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     decimal itemTotal = part.Unit_Price * item.Quantity;
                     subTotal += itemTotal;
 
+                    // 1. Add to database entity list
                     salesItems.Add(new SalesItem { Part_ID = part.Part_ID, Quantity_Sold = item.Quantity, Unit_Price = part.Unit_Price, Total_Price = itemTotal });
 
-                    // Deduct from stock
+                    // 2. Add to response DTO list (includes Part_Name for the frontend)
+                    resultItems.Add(new SalesItemResultDto { Part_ID = part.Part_ID, Part_Name = part.Part_Name, Quantity = item.Quantity, Unit_Price = part.Unit_Price, Total_Price = itemTotal });
+
                     part.Stock_Quantity -= item.Quantity;
                     _partRepository.Update(part);
                 }
 
-                // Apply a ten percent loyalty discount if the subtotal exceeds five thousand
                 decimal discount = subTotal > 5000 ? subTotal * 0.10m : 0;
                 decimal finalTotal = subTotal - discount;
 
@@ -166,13 +169,44 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 await _salesRepository.AddSalesItemsAsync(salesItems);
 
                 await transaction.CommitAsync();
-                return (true, $"Invoice #{invoice.Sales_Invoice_No} created. Total: Rs {finalTotal}", Enumerable.Empty<string>());
+
+                // 3. Build the final response object
+                var responseData = new SalesInvoiceResultDto
+                {
+                    Invoice_No = invoice.Sales_Invoice_No,
+                    Sub_Total = subTotal,
+                    Discount_Amount = discount,
+                    Final_Total = finalTotal,
+                    Items = resultItems,
+                    Message = discount > 0 ? "10% Loyalty discount applied!" : "Invoice created successfully."
+                };
+
+                return (true, responseData, Enumerable.Empty<string>());
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return (false, string.Empty, new[] { ex.Message });
+                return (false, null, new[] { ex.Message });
             }
+        }
+
+        // Fetch Customers for Dropdown 
+        public async Task<IEnumerable<CustomerDropdownDto>> GetCustomersForDropdownAsync()
+        {
+            var customers = await _customerRepository.GetCustomersWithUsersAsync();
+
+            return customers.Select(c => new CustomerDropdownDto
+            {
+                Customer_ID = c.Customer_ID,
+                FullName = c.User.FullName
+            });
+        }
+
+        // Fetch Staff ID 
+        public async Task<int> GetCurrentStaffIdAsync(string userId)
+        {
+            var staff = await _staffRepository.GetStaffByUserIdAsync(userId);
+            return staff?.Staff_ID ?? 0;
         }
     }
 }
