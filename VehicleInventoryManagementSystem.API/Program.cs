@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Data;
 using VehicleInventoryManagementSystem.Application.Interfaces.Customer;
 using VehicleInventoryManagementSystem.Application.Interfaces.Notifications;
@@ -9,6 +11,15 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 using VehicleInventoryManagementSystem.Infrastructure.Services.Customer;
 using VehicleInventoryManagementSystem.Infrastructure.Services.Notifications;
 using VehicleInventoryManagementSystem.Infrastructure.Services.PurchaseInvoice;
+using System.Security.Claims;
+using System.Text;
+using VehicleInventoryManagementSystem.Application.DTOs;
+using VehicleInventoryManagementSystem.Application.Interfaces.IRepositories;
+using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
+using VehicleInventoryManagementSystem.Domain.Models;
+using VehicleInventoryManagementSystem.Infrastructure.Presistance;
+using VehicleInventoryManagementSystem.Infrastructure.Repositories;
+using VehicleInventoryManagementSystem.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +30,7 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+//// 1. Database setup
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -27,14 +39,57 @@ builder.Services.AddIdentity<User, Role>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// F12 — Customer registration
+// F12 ï¿½ Customer registration
 builder.Services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
 
-// F4 — Purchase invoices
+// F4 ï¿½ Purchase invoices
 builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
 
-// F15 — Notifications (low-stock alerts; email reminders to follow)
+// F15 ï¿½ Notifications (low-stock alerts; email reminders to follow)
 builder.Services.AddScoped<INotificationService, NotificationService>();
+// Bind JwtSettings to the DI container
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+
+
+// 3. Register Services & Repositories
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IStaffRepository, StaffRepository>();
+builder.Services.AddScoped<IStaffService, StaffService>();
+
+// 4. Configure Authentication & JWT
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings!.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+        ClockSkew = TimeSpan.Zero,
+        RoleClaimType = ClaimTypes.Role,
+        NameClaimType = ClaimTypes.Name
+    };
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:1234") // Your exact frontend URL
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Useful for auth tokens/cookies
+    });
+});
 
 var app = builder.Build();
 
@@ -45,6 +100,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowFrontend");
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
