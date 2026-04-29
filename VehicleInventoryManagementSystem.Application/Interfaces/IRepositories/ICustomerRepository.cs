@@ -9,5 +9,7 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
     {
         Task AddCustomerAsync(Customer customer);
         Task SaveChangesAsync();
+
+        Task<IEnumerable<Customer>> GetCustomersWithUsersAsync();
     }
 }

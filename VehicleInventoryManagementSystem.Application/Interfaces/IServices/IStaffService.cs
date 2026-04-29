@@ -12,7 +12,10 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IServices
 
         Task<(bool Succeeded, IEnumerable<string> Errors)> RegisterCustomerWithVehicleAsync(RegisterCustomerWithVehicleDto dto);
 
-        Task<(bool Succeeded, string Message, IEnumerable<string> Errors)> CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto);
+        Task<(bool Succeeded, SalesInvoiceResultDto? Data, IEnumerable<string> Errors)> CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto);
+
+        Task<IEnumerable<CustomerDropdownDto>> GetCustomersForDropdownAsync();
+        Task<int> GetCurrentStaffIdAsync(string userId);
 
     }
 }

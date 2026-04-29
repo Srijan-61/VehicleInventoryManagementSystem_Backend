@@ -14,4 +14,10 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
         public int Quantity { get; set; }
     }
+
+    public class CustomerDropdownDto
+    {
+        public int Customer_ID { get; set; }
+        public string FullName { get; set; } = string.Empty;
+    }
 }

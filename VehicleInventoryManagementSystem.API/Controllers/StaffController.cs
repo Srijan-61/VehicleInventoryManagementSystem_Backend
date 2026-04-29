@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using VehicleInventoryManagementSystem.Application.DTOs;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 
@@ -30,16 +31,33 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             return BadRequest(new { Message = "Registration failed.", Errors = errors });
         }
 
-        // FEATURE 7 & 16: Create Sales Invoice with Loyalty Discount
+        // get customer details for dropdown in sales invoice creation form
+        [HttpGet("customers")]
+        public async Task<IActionResult> GetCustomersDropdown()
+        {
+            var customers = await _staffService.GetCustomersForDropdownAsync();
+            return Ok(customers);
+        }
+
+        // Feature 7 & 16 
         [HttpPost("create-sales-invoice")]
         public async Task<IActionResult> CreateSalesInvoice([FromBody] CreateSalesInvoiceDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var (succeeded, message, errors) = await _staffService.CreateSalesInvoiceAsync(dto);
+            // Securely extract the logged-in User's ID from the JWT Token
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            // Use the internal helper method to find their Staff_ID
+            dto.Staff_ID = await _staffService.GetCurrentStaffIdAsync(userId);
+            if (dto.Staff_ID == 0) return BadRequest(new { Message = "Staff profile not found." });
+
+            // Process the sale
+            var (succeeded, data, errors) = await _staffService.CreateSalesInvoiceAsync(dto);
 
             if (succeeded)
-                return Ok(new { Message = message });
+                return Ok(data);
 
             return BadRequest(new { Message = "Transaction failed.", Errors = errors });
         }

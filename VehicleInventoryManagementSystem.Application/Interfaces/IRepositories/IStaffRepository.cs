@@ -11,5 +11,7 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
     {
         Task AddStaffAsync(Staff staff);
         Task SaveChangesAsync();
+
+        Task<Staff?> GetStaffByUserIdAsync(string userId);
     }
 }
