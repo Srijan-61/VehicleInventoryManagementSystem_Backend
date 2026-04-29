@@ -45,6 +45,8 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Presistance
                 new Role { Id = "3", Name = "Customer", NormalizedName = "CUSTOMER", ConcurrencyStamp = "e3c4b406-ae78-4216-a12f-9c82e0449833", Description = "Vehicle Owner" }
             );
 
+            
+
             // 2. Configure Composite Primary Keys (UserRole is handled natively now)
             builder.Entity<PurchaseItem>()
                 .HasKey(pi => new { pi.Purchase_Invoice_No, pi.Part_ID });

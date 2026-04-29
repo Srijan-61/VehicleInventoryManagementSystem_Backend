@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 using VehicleInventoryManagementSystem.Domain.Models;
 
 namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
 {
-    public interface IStaffRepository
+    public interface ICustomerRepository
     {
-        Task AddStaffAsync(Staff staff);
+        Task AddCustomerAsync(Customer customer);
         Task SaveChangesAsync();
 
-        Task<Staff?> GetStaffByUserIdAsync(string userId);
+        Task<IEnumerable<Customer>> GetCustomersWithUsersAsync();
     }
 }

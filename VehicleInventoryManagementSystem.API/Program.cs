@@ -13,7 +13,7 @@ using VehicleInventoryManagementSystem.Infrastructure.Services.Notifications;
 using VehicleInventoryManagementSystem.Infrastructure.Services.PurchaseInvoice;
 using System.Security.Claims;
 using System.Text;
-using VehicleInventoryManagementSystem.Application.DTOs;
+using VehicleInventoryManagementSystem.Application.DTOs.Auth;
 using VehicleInventoryManagementSystem.Application.Interfaces.IRepositories;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 using VehicleInventoryManagementSystem.Domain.Models;
@@ -55,6 +55,11 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
 // 3. Register Services & Repositories
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<ISalesRepository, SalesRepository>();
+builder.Services.AddScoped<IVehiclePartRepository, VehiclePartRepository>();
+
 builder.Services.AddScoped<IStaffService, StaffService>();
 
 // 4. Configure Authentication & JWT

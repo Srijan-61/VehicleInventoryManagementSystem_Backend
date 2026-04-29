@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace VehicleInventoryManagementSystem.Application.DTOs
+namespace VehicleInventoryManagementSystem.Application.DTOs.Auth
 {
     public class RegisterStaffDto
     {
