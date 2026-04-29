@@ -7,10 +7,12 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 {
-    public class SalesRepository(AppDbContext _context) : ISalesRepository
+    public class VehicleRepository : IVehicleRepository
     {
-        public async Task AddInvoiceAsync(SalesInvoice invoice) => await _context.SalesInvoices.AddAsync(invoice);
-        public async Task AddSalesItemsAsync(IEnumerable<SalesItem> items) => await _context.SalesItems.AddRangeAsync(items);
+        private readonly AppDbContext _context;
+        public VehicleRepository(AppDbContext context) => _context = context;
+
+        public async Task AddVehicleAsync(Vehicle vehicle) => await _context.Vehicles.AddAsync(vehicle);
         public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
     }
 }

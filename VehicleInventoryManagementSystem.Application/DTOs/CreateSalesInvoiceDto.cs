@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 namespace VehicleInventoryManagementSystem.Application.DTOs
 {
@@ -10,18 +13,11 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
         [Required]
         public int Staff_ID { get; set; }
 
+        [Required]
         public bool Is_Paid { get; set; }
 
-        public List<CreateSalesItemDto> Items { get; set; } = new();
-    }
-
-    public class CreateSalesItemDto
-    {
         [Required]
-        public int Part_ID { get; set; }
-
-        [Required]
-        [Range(1, 1000)]
-        public int Quantity_Sold { get; set; }
+        [MinLength(1, ErrorMessage = "At least one part must be sold.")]
+        public List<SalesItemDto> Items { get; set; } = new List<SalesItemDto>();
     }
 }

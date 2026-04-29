@@ -1,19 +1,14 @@
-﻿using VehicleInventoryManagementSystem.Domain.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using VehicleInventoryManagementSystem.Domain.Models;
 
 namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
 {
     public interface ISalesRepository
     {
-        Task<Customer?> GetCustomerByIdAsync(int customerId);
-        Task<VehiclePart?> GetPartByIdAsync(int partId);
-
-        Task AddSalesInvoiceAsync(SalesInvoice invoice);
-        Task AddSalesItemAsync(SalesItem item);
-
-        Task BeginTransactionAsync();
-        Task CommitTransactionAsync();
-        Task RollbackTransactionAsync();
-
+        Task AddInvoiceAsync(SalesInvoice invoice);
+        Task AddSalesItemsAsync(IEnumerable<SalesItem> items);
         Task SaveChangesAsync();
     }
 }

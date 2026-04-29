@@ -7,10 +7,10 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 {
-    public class SalesRepository(AppDbContext _context) : ISalesRepository
+    public class VehiclePartRepository(AppDbContext _context) : IVehiclePartRepository
     {
-        public async Task AddInvoiceAsync(SalesInvoice invoice) => await _context.SalesInvoices.AddAsync(invoice);
-        public async Task AddSalesItemsAsync(IEnumerable<SalesItem> items) => await _context.SalesItems.AddRangeAsync(items);
+        public async Task<VehiclePart?> GetByIdAsync(int partId) => await _context.VehicleParts.FindAsync(partId);
+        public void Update(VehiclePart part) => _context.VehicleParts.Update(part);
         public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
     }
 }
