@@ -49,7 +49,6 @@ builder.Services.AddScoped<ICustomerSelfRepository, CustomerSelfRepository>();
 builder.Services.AddScoped<ISalesRepository, SalesRepository>();
 
 builder.Services.AddScoped<ICustomerSelfService, CustomerSelfService>();
-builder.Services.AddScoped<ISalesService, SalesService>();
 
 builder.Services.AddScoped<IAdminPartsRepository, AdminPartsRepository>();
 builder.Services.AddScoped<IAdminPartsService, AdminPartsService>();
