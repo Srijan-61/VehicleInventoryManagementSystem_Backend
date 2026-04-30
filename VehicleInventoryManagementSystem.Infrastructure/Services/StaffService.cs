@@ -147,6 +147,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     _partRepository.Update(part);
                 }
 
+                // Feature 16 - Loyalty Discount: 10% off for customers with total spending over $5000
                 decimal discount = subTotal > 5000 ? subTotal * 0.10m : 0;
                 decimal finalTotal = subTotal - discount;
 
