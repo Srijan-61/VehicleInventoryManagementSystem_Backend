@@ -1,0 +1,13 @@
+﻿using VehicleInventoryManagementSystem.Application.DTOs;
+using VehicleInventoryManagementSystem.Domain.Models;
+
+namespace VehicleInventoryManagementSystem.Application.Interfaces.IServices
+{
+    public interface IAdminPartsService
+    {
+        Task<List<VehiclePart>> GetAllPartsAsync();
+        Task<object> PurchasePartsAsync(CreatePurchaseDto dto);
+        Task<string> UpdatePartAsync(int partId, UpdateVehiclePartDto dto);
+        Task<string> DeletePartAsync(int partId);
+    }
+}
