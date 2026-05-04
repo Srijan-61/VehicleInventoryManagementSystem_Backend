@@ -2,7 +2,8 @@ using VehicleInventoryManagementSystem.Application.DTOs;
 
 namespace VehicleInventoryManagementSystem.Application.Interfaces.IServices
 {
-    // features 7 & 16 
+    // Service interface for the sales and POS feature (Features 7 and 16)
+    // Covers invoice creation, customer lookup for the dropdown, and finding the current staff member
     public interface ISalesFeatureService
     {
         Task<(bool Succeeded, SalesInvoiceResultDto? Data, IEnumerable<string> Errors)> CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto);

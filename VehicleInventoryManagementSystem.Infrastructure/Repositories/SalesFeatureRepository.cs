@@ -5,8 +5,8 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 {
-    // Features 7 & 16: Sales & POS - Vertical Slice Repository
-    // Handles stock deduction, SalesInvoice save, SalesItems save, and supporting lookups
+    // This repository deals with all the database work for the sales feature (Features 7 and 16)
+    // It handles parts lookup, stock updates, saving invoices, and fetching customers and staff info
     public class SalesFeatureRepository : ISalesFeatureRepository
     {
         private readonly AppDbContext _context;

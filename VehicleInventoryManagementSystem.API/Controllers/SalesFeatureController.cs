@@ -6,8 +6,8 @@ using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 
 namespace VehicleInventoryManagementSystem.API.Controllers
 {
-    // Features 7 & 16: Sales & POS - Vertical Slice Controller
-    // 1:1:1 Rule => Injects ONLY ISalesFeatureService
+    // This controller handles the sales and POS functionality (Features 7 and 16)
+    // Staff can create invoices and look up customers from here
     [Route("api/sales")]
     [ApiController]
     [Authorize(Roles = "Staff")]
@@ -20,7 +20,7 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             _salesFeatureService = salesFeatureService;
         }
 
-        // GET api/sales/customers - Fetch customers for dropdown
+        // Returns the list of customers so the frontend can show them in a dropdown
         [HttpGet("customers")]
         public async Task<IActionResult> GetCustomersDropdown()
         {
@@ -28,21 +28,21 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             return Ok(customers);
         }
 
-        // POST api/sales/create-invoice - Create a sales invoice (Feature 7 & 16)
+        // This is the main endpoint for creating a new sales invoice
         [HttpPost("create-invoice")]
         public async Task<IActionResult> CreateSalesInvoice([FromBody] CreateSalesInvoiceDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            // Securely extract the logged-in User's ID from the JWT Token
+            // Get the logged-in user's ID from their JWT token so we know which staff member is making the sale
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            // Use the internal helper method to find their Staff_ID
+            // Look up the Staff_ID from the database using their user ID
             dto.Staff_ID = await _salesFeatureService.GetCurrentStaffIdAsync(userId);
             if (dto.Staff_ID == 0) return BadRequest(new { Message = "Staff profile not found." });
 
-            // Process the sale
+            // Now actually process the sale and get back the invoice details
             var (succeeded, data, errors) = await _salesFeatureService.CreateSalesInvoiceAsync(dto);
 
             if (succeeded)

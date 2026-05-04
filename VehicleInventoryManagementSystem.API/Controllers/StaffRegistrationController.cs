@@ -5,7 +5,8 @@ using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 
 namespace VehicleInventoryManagementSystem.API.Controllers
 {
-    // feature 2 Staff registration
+    // This controller handles staff registration (Feature 2)
+    // Only Admins can access this, it calls the registration service to create a new staff account
     
     [Route("api/staff-registration")]
     [ApiController]
