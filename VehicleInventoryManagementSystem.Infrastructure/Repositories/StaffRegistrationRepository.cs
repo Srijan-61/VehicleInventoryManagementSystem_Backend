@@ -4,8 +4,8 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 {
-    // Feature 2: Staff Registration - Vertical Slice Repository
-    // Handles DB transaction to save to AspNetUsers and StaffProfiles
+    // This repository is responsible for saving staff data to the database (Feature 2)
+    // It works with the StaffProfiles table to persist new staff records
     public class StaffRegistrationRepository : IStaffRegistrationRepository
     {
         private readonly AppDbContext _context;

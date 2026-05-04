@@ -7,7 +7,8 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Services
 {
-    // feature 6: customer registration 
+    // This service takes care of registering a new customer and their vehicle (Feature 6)
+    // Everything runs inside a transaction so we don't end up with partial data if something goes wrong
  
     public class CustomerRegistrationService : ICustomerRegistrationService
     {
@@ -25,7 +26,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             _context = context;
         }
 
-        // Registers a new customer and adds their initial vehicle details
+        // Creates a user account, saves customer profile, and adds vehicle info all in one go
         public async Task<(bool Succeeded, IEnumerable<string> Errors)> RegisterCustomerWithVehicleAsync(RegisterCustomerWithVehicleDto dto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();

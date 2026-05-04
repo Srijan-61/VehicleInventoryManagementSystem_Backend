@@ -7,7 +7,8 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Services
 {
-    // Feature 2 staff registration 
+    // This service handles the business logic for registering new staff members (Feature 2)
+    // It creates the user account, assigns the "Staff" role, and saves the staff profile all in one transaction
    
     public class StaffRegistrationService : IStaffRegistrationService
     {
@@ -25,7 +26,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             _context = context;
         }
 
-        // registers a new staff member and assigns the appropriate role
+        // We wrap everything in a transaction so if something fails halfway through, nothing gets saved
         public async Task<(bool Succeeded, IEnumerable<string> Errors)> RegisterStaffAsync(RegisterStaffDto dto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();

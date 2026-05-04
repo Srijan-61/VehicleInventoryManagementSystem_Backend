@@ -6,7 +6,8 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Services
 {
-    // Features 7 & 16
+    // This service contains all the business logic for sales and POS (Features 7 and 16)
+    // It handles creating invoices, applying discounts, updating stock, and fetching helper data
     public class SalesFeatureService : ISalesFeatureService
     {
         private readonly ISalesFeatureRepository _salesFeatureRepository;
@@ -20,7 +21,8 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             _context = context;
         }
 
-        // Creates a sales invoice, updates part stock, and applies loyalty discounts if applicable
+        // Main method that creates a sales invoice - it loops through each item, checks stock,
+        // calculates totals, applies the loyalty discount if applicable, and saves everything
         public async Task<(bool Succeeded, SalesInvoiceResultDto? Data, IEnumerable<string> Errors)> CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -28,7 +30,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             {
                 decimal subTotal = 0;
                 var salesItems = new List<SalesItem>();
-                var resultItems = new List<SalesItemResultDto>(); // For the response
+                var resultItems = new List<SalesItemResultDto>(); // this will hold the item details we send back to the frontend
 
                 foreach (var item in dto.Items)
                 {
@@ -39,17 +41,17 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     decimal itemTotal = part.Unit_Price * item.Quantity;
                     subTotal += itemTotal;
 
-                    //add to database entity list
+                    // save this item for the database
                     salesItems.Add(new SalesItem { Part_ID = part.Part_ID, Quantity_Sold = item.Quantity, Unit_Price = part.Unit_Price, Total_Price = itemTotal });
 
-                    // add to response DTO list (includes Part_Name for the frontend)
+                    // also save it for the response so the frontend can display the part name
                     resultItems.Add(new SalesItemResultDto { Part_ID = part.Part_ID, Part_Name = part.Part_Name, Quantity = item.Quantity, Unit_Price = part.Unit_Price, Total_Price = itemTotal });
 
                     part.Stock_Quantity -= item.Quantity;
                     _salesFeatureRepository.UpdatePart(part);
                 }
 
-                // Feature 16 discout 
+                // Feature 16: if the subtotal is over 5000, we give a 10% loyalty discount
                 decimal discount = subTotal > 5000 ? subTotal * 0.10m : 0;
                 decimal finalTotal = subTotal - discount;
 
@@ -73,7 +75,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
 
                 await transaction.CommitAsync();
 
-                //build the final response object
+                // put together the response with all the invoice details
                 var responseData = new SalesInvoiceResultDto
                 {
                     Invoice_No = invoice.Sales_Invoice_No,
@@ -93,7 +95,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             }
         }
 
-        // get customers for dropdown
+        // Returns all customers with their names for the dropdown on the sales form
         public async Task<IEnumerable<CustomerDropdownDto>> GetCustomersForDropdownAsync()
         {
             var customers = await _salesFeatureRepository.GetCustomersWithUsersAsync();
@@ -105,7 +107,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             });
         }
 
-        // get current staff id
+        // Finds the Staff_ID for the currently logged-in user so we can link the invoice to them
         public async Task<int> GetCurrentStaffIdAsync(string userId)
         {
             var staff = await _salesFeatureRepository.GetStaffByUserIdAsync(userId);

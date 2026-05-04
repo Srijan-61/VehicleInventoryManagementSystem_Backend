@@ -4,8 +4,8 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 {
-    // Feature 6: Customer Registration - Vertical Slice Repository
-    // Handles the DB transaction saving User, Customer, and Vehicle
+    // This repository handles saving customer and vehicle records to the database (Feature 6)
+    // It manages the Customers and Vehicles tables during the registration process
     public class CustomerRegistrationRepository : ICustomerRegistrationRepository
     {
         private readonly AppDbContext _context;
