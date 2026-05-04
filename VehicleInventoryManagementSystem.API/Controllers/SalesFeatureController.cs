@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using VehicleInventoryManagementSystem.Application.DTOs;
@@ -6,41 +6,30 @@ using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 
 namespace VehicleInventoryManagementSystem.API.Controllers
 {
-    [Route("api/[controller]")]
+    // Features 7 & 16: Sales & POS - Vertical Slice Controller
+    // 1:1:1 Rule => Injects ONLY ISalesFeatureService
+    [Route("api/sales")]
     [ApiController]
     [Authorize(Roles = "Staff")]
-    public class StaffController : ControllerBase
+    public class SalesFeatureController : ControllerBase
     {
-        private readonly IStaffService _staffService;
+        private readonly ISalesFeatureService _salesFeatureService;
 
-        public StaffController(IStaffService staffService)
+        public SalesFeatureController(ISalesFeatureService salesFeatureService)
         {
-            _staffService = staffService;
+            _salesFeatureService = salesFeatureService;
         }
 
-        [HttpPost("register-customer")]
-        public async Task<IActionResult> RegisterCustomerWithVehicle([FromBody] RegisterCustomerWithVehicleDto dto)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var (succeeded, errors) = await _staffService.RegisterCustomerWithVehicleAsync(dto);
-
-            if (succeeded)
-                return Ok(new { Message = "Customer and vehicle registered successfully." });
-
-            return BadRequest(new { Message = "Registration failed.", Errors = errors });
-        }
-
-        // get customer details for dropdown in sales invoice creation form
+        // GET api/sales/customers - Fetch customers for dropdown
         [HttpGet("customers")]
         public async Task<IActionResult> GetCustomersDropdown()
         {
-            var customers = await _staffService.GetCustomersForDropdownAsync();
+            var customers = await _salesFeatureService.GetCustomersForDropdownAsync();
             return Ok(customers);
         }
 
-        // Feature 7 & 16 
-        [HttpPost("create-sales-invoice")]
+        // POST api/sales/create-invoice - Create a sales invoice (Feature 7 & 16)
+        [HttpPost("create-invoice")]
         public async Task<IActionResult> CreateSalesInvoice([FromBody] CreateSalesInvoiceDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -50,11 +39,11 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             if (userId == null) return Unauthorized();
 
             // Use the internal helper method to find their Staff_ID
-            dto.Staff_ID = await _staffService.GetCurrentStaffIdAsync(userId);
+            dto.Staff_ID = await _salesFeatureService.GetCurrentStaffIdAsync(userId);
             if (dto.Staff_ID == 0) return BadRequest(new { Message = "Staff profile not found." });
 
             // Process the sale
-            var (succeeded, data, errors) = await _staffService.CreateSalesInvoiceAsync(dto);
+            var (succeeded, data, errors) = await _salesFeatureService.CreateSalesInvoiceAsync(dto);
 
             if (succeeded)
                 return Ok(data);

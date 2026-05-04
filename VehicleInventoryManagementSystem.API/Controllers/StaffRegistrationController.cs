@@ -1,35 +1,34 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VehicleInventoryManagementSystem.Application.DTOs.Auth;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 
 namespace VehicleInventoryManagementSystem.API.Controllers
 {
-    [Route("api/[controller]")]
+    // feature 2 Staff registration
+    
+    [Route("api/staff-registration")]
     [ApiController]
-    [Authorize(Roles = "Admin")] 
-    public class AdminController : ControllerBase
+    [Authorize(Roles = "Admin")]
+    public class StaffRegistrationController : ControllerBase
     {
-        private readonly IStaffService _staffService;
+        private readonly IStaffRegistrationService _staffRegistrationService;
 
-        // Constructor Injection for the Service layer
-        public AdminController(IStaffService staffService)
+        public StaffRegistrationController(IStaffRegistrationService staffRegistrationService)
         {
-            _staffService = staffService;
+            _staffRegistrationService = staffRegistrationService;
         }
 
-        [HttpPost("register-staff")]
+        [HttpPost]
         public async Task<IActionResult> RegisterStaff([FromBody] RegisterStaffDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            
-            var (succeeded, errors) = await _staffService.RegisterStaffAsync(dto);
+            var (succeeded, errors) = await _staffRegistrationService.RegisterStaffAsync(dto);
 
             if (succeeded)
                 return Ok(new { Message = "Staff registered successfully." });
 
-          
             return BadRequest(new { Message = "Registration failed.", Errors = errors });
         }
     }
