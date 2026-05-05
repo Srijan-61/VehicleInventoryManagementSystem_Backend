@@ -72,6 +72,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
 
                 foreach (var si in salesItems) si.Sales_Invoice_No = invoice.Sales_Invoice_No;
                 await _salesFeatureRepository.AddSalesItemsAsync(salesItems);
+                await _salesFeatureRepository.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 

@@ -6,9 +6,9 @@ using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 
 namespace VehicleInventoryManagementSystem.API.Controllers
 {
-    // This controller handles the sales and POS functionality (Features 7 and 16)
+    // This controller handles the sales and Sales invoice functionality (Features 7 and 16)
     // Staff can create invoices and look up customers from here
-    [Route("api/sales")]
+    [Route("api/Staff")]
     [ApiController]
     [Authorize(Roles = "Staff")]
     public class SalesFeatureController : ControllerBase
@@ -29,7 +29,7 @@ namespace VehicleInventoryManagementSystem.API.Controllers
         }
 
         // This is the main endpoint for creating a new sales invoice
-        [HttpPost("create-invoice")]
+        [HttpPost("create-sales-invoice")]
         public async Task<IActionResult> CreateSalesInvoice([FromBody] CreateSalesInvoiceDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
