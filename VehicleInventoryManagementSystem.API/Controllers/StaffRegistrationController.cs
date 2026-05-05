@@ -8,7 +8,7 @@ namespace VehicleInventoryManagementSystem.API.Controllers
     // This controller handles staff registration (Feature 2)
     // Only Admins can access this, it calls the registration service to create a new staff account
     
-    [Route("api/staff-registration")]
+    [Route("api/Admin/register-staff")]
     [ApiController]
     [Authorize(Roles = "Admin")]
     public class StaffRegistrationController : ControllerBase

@@ -7,7 +7,7 @@ namespace VehicleInventoryManagementSystem.API.Controllers
 {
     // This controller handles customer registration along with their vehicle info (Feature 6)
     // Only Staff members can register new customers, and it uses a dedicated service for this
-    [Route("api/customer-registration")]
+    [Route("api/staff/register-customer")]
     [ApiController]
     [Authorize(Roles = "Staff")]
     public class CustomerRegistrationController : ControllerBase
