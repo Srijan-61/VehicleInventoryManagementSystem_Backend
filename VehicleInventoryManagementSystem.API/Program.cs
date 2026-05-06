@@ -43,7 +43,20 @@ builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ISalesRepository, SalesRepository>();
 builder.Services.AddScoped<IVehiclePartRepository, VehiclePartRepository>();
 
+<<<<<<< HEAD
+builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<IStaffReportRepository, StaffReportRepository>();
+builder.Services.AddScoped<IStaffReportService, StaffReportService>();
 
+builder.Services.Configure<SmtpEmailSettings>(
+    builder.Configuration.GetSection("SmtpEmailSettings"));
+
+builder.Services.AddScoped<IInvoiceEmailRepository, InvoiceEmailRepository>();
+builder.Services.AddScoped<IInvoiceEmailService, InvoiceEmailService>();
+builder.Services.AddScoped<IEmailSenderService, SmtpEmailSenderService>();
+=======
+
+>>>>>>> 118d2976ef990e29eab57fefeced73bbcb02897f
 
 builder.Services.AddScoped<ICustomerSelfRepository, CustomerSelfRepository>();
 builder.Services.AddScoped<ISalesRepository, SalesRepository>();
