@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Launch settings (contains local environment-specific ports and URLs)
+**/launchSettings.json
+
 # User-specific files
 *.rsuser
 *.suo
