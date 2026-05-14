@@ -30,7 +30,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             {
                 decimal subTotal = 0;
                 var salesItems = new List<SalesItem>();
-                var resultItems = new List<SalesItemResultDto>(); // this will hold the item details we send back to the frontend
+                var resultItems = new List<SalesItemResultDto>(); // created invoice store for frontend display
 
                 foreach (var item in dto.Items)
                 {
@@ -114,5 +114,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             var staff = await _salesFeatureRepository.GetStaffByUserIdAsync(userId);
             return staff?.Staff_ID ?? 0;
         }
+
+
     }
 }
