@@ -35,12 +35,14 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 
 
+// Register Services & Repositories
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ISalesRepository, SalesRepository>();
 builder.Services.AddScoped<IVehiclePartRepository, VehiclePartRepository>();
+
 
 
 builder.Services.AddScoped<IStaffReportRepository, StaffReportRepository>();
@@ -53,27 +55,20 @@ builder.Services.AddScoped<IInvoiceEmailRepository, InvoiceEmailRepository>();
 builder.Services.AddScoped<IInvoiceEmailService, InvoiceEmailService>();
 builder.Services.AddScoped<IEmailSenderService, SmtpEmailSenderService>();
 
-
 builder.Services.AddScoped<ICustomerSelfRepository, CustomerSelfRepository>();
-builder.Services.AddScoped<ISalesRepository, SalesRepository>();
-
 builder.Services.AddScoped<ICustomerSelfService, CustomerSelfService>();
 
 builder.Services.AddScoped<IAdminPartsRepository, AdminPartsRepository>();
 builder.Services.AddScoped<IAdminPartsService, AdminPartsService>();
 
-
 builder.Services.AddScoped<IStaffRegistrationRepository, StaffRegistrationRepository>();
 builder.Services.AddScoped<IStaffRegistrationService, StaffRegistrationService>();
-
 
 builder.Services.AddScoped<IVendorManagementRepository, VendorManagementRepository>();
 builder.Services.AddScoped<IVendorManagementService, VendorManagementService>();
 
-
 builder.Services.AddScoped<ICustomerDetailsRepository, CustomerDetailsRepository>();
 builder.Services.AddScoped<ICustomerDetailsService, CustomerDetailsService>();
-
 
 builder.Services.AddScoped<ICustomerSearchRepository, CustomerSearchRepository>();
 builder.Services.AddScoped<ICustomerSearchService, CustomerSearchService>();
@@ -83,8 +78,6 @@ builder.Services.AddScoped<ICustomerRegistrationService, CustomerRegistrationSer
 
 builder.Services.AddScoped<ISalesFeatureRepository, SalesFeatureRepository>();
 builder.Services.AddScoped<ISalesFeatureService, SalesFeatureService>();
-
-// Configure Authentication & JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
