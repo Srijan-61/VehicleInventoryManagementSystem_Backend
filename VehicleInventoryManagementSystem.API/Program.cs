@@ -16,8 +16,6 @@ using System.Text;
 using VehicleInventoryManagementSystem.Application.DTOs.Auth;
 using VehicleInventoryManagementSystem.Application.Interfaces.IRepositories;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
-using VehicleInventoryManagementSystem.Domain.Models;
-using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 using VehicleInventoryManagementSystem.Infrastructure.Repositories;
 using VehicleInventoryManagementSystem.Infrastructure.Services;
 
@@ -40,7 +38,7 @@ builder.Services.AddIdentity<User, Role>()
     .AddDefaultTokenProviders();
 
 // F12 � Customer registration
-builder.Services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
+builder.Services.AddScoped<VehicleInventoryManagementSystem.Infrastructure.Services.CustomerRegistrationService>();
 
 // F4 � Purchase invoices
 builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
@@ -52,17 +50,48 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 
 
-// 3. Register Services & Repositories
+// Register Services & Repositories
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IStaffRepository, StaffRepository>();
+
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ISalesRepository, SalesRepository>();
 builder.Services.AddScoped<IVehiclePartRepository, VehiclePartRepository>();
 
-builder.Services.AddScoped<IStaffService, StaffService>();
 
-// 4. Configure Authentication & JWT
+
+builder.Services.AddScoped<IStaffReportRepository, StaffReportRepository>();
+builder.Services.AddScoped<IStaffReportService, StaffReportService>();
+
+builder.Services.Configure<SmtpEmailSettings>(
+    builder.Configuration.GetSection("SmtpEmailSettings"));
+
+builder.Services.AddScoped<IInvoiceEmailRepository, InvoiceEmailRepository>();
+builder.Services.AddScoped<IInvoiceEmailService, InvoiceEmailService>();
+builder.Services.AddScoped<IEmailSenderService, SmtpEmailSenderService>();
+
+builder.Services.AddScoped<ICustomerSelfRepository, CustomerSelfRepository>();
+builder.Services.AddScoped<ICustomerSelfService, CustomerSelfService>();
+
+builder.Services.AddScoped<IAdminPartsRepository, AdminPartsRepository>();
+builder.Services.AddScoped<IAdminPartsService, AdminPartsService>();
+
+builder.Services.AddScoped<IStaffRegistrationRepository, StaffRegistrationRepository>();
+builder.Services.AddScoped<IStaffRegistrationService, StaffRegistrationService>();
+
+builder.Services.AddScoped<IVendorManagementRepository, VendorManagementRepository>();
+builder.Services.AddScoped<IVendorManagementService, VendorManagementService>();
+
+builder.Services.AddScoped<ICustomerDetailsRepository, CustomerDetailsRepository>();
+builder.Services.AddScoped<ICustomerDetailsService, CustomerDetailsService>();
+
+builder.Services.AddScoped<ICustomerSearchRepository, CustomerSearchRepository>();
+builder.Services.AddScoped<ICustomerSearchService, CustomerSearchService>();
+
+builder.Services.AddScoped<ICustomerRegistrationRepository, CustomerRegistrationRepository>();
+builder.Services.AddScoped<VehicleInventoryManagementSystem.Application.Interfaces.Customer.ICustomerRegistrationService, VehicleInventoryManagementSystem.Infrastructure.Services.Customer.CustomerRegistrationService>();
+builder.Services.AddScoped<ISalesFeatureRepository, SalesFeatureRepository>();
+builder.Services.AddScoped<ISalesFeatureService, SalesFeatureService>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -89,7 +118,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:1234") // Your exact frontend URL
+        policy.WithOrigins("http://localhost:1234") //  frontend URL
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials(); // Useful for auth tokens/cookies

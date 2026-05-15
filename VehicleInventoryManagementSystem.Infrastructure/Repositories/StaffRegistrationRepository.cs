@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using VehicleInventoryManagementSystem.Application.Interfaces.IRepositories;
 using VehicleInventoryManagementSystem.Domain.Models;
 using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 {
-    public class StaffRepository : IStaffRepository
+    // This repository is responsible for saving staff data to the database (Feature 2)
+    // It works with the StaffProfiles table to persist new staff records
+    public class StaffRegistrationRepository : IStaffRegistrationRepository
     {
         private readonly AppDbContext _context;
 
-        public StaffRepository(AppDbContext context)
+        public StaffRegistrationRepository(AppDbContext context)
         {
             _context = context;
         }
@@ -26,12 +23,6 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<Staff?> GetStaffByUserIdAsync(string userId)
-        {
-            return await _context.StaffProfiles
-                .FirstOrDefaultAsync(s => s.User_Id == userId);
         }
     }
 }
