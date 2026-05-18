@@ -6,6 +6,7 @@ using System.Data;
 using System.Security.Claims;
 using System.Text;
 using VehicleInventoryManagementSystem.Application.DTOs.Auth;
+using VehicleInventoryManagementSystem.Application.Interfaces;
 using VehicleInventoryManagementSystem.Application.Interfaces.IRepositories;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 using VehicleInventoryManagementSystem.Domain.Models;
@@ -78,6 +79,11 @@ builder.Services.AddScoped<ICustomerRegistrationService, CustomerRegistrationSer
 
 builder.Services.AddScoped<ISalesFeatureRepository, SalesFeatureRepository>();
 builder.Services.AddScoped<ISalesFeatureService, SalesFeatureService>();
+
+// F15 - Alert Services (Low Stock Alerts & Email Reminders)
+builder.Services.AddScoped<IAlertService, AlertService>();
+builder.Services.AddHostedService<AlertMonitorBackgroundService>();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
