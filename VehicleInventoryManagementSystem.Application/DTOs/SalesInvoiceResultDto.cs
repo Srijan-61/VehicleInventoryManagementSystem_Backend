@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -22,5 +22,15 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
         public int Quantity { get; set; }
         public decimal Unit_Price { get; set; }
         public decimal Total_Price { get; set; }
+    }
+
+    public class RecentSalesInvoiceDto
+    {
+        public int Invoice_No { get; set; }
+        public DateTime Sales_Date { get; set; }
+        public string Customer_Name { get; set; } = string.Empty;
+        public string Staff_Name { get; set; } = string.Empty;
+        public decimal Final_Total { get; set; }
+        public bool Is_Paid { get; set; }
     }
 }
