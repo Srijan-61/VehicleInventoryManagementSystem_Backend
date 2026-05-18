@@ -40,5 +40,10 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 
             return (customer, vehicle, history);
         }
+
+        Task<(ICustomerRepository Customer, Vehicle PrimaryVehicle, List<string> ServiceHistory)> ICustomerDetailsRepository.GetCustomerDataAsync(int customerId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

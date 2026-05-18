@@ -20,6 +20,11 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             await _context.Customers.AddAsync(customer);
         }
 
+        public Task AddCustomerAsync(ICustomerRepository customer)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task AddVehicleAsync(Vehicle vehicle)
         {
             await _context.Vehicles.AddAsync(vehicle);

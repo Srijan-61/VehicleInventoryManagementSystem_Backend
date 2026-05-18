@@ -20,5 +20,15 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
         {
             return await _context.Customers.Include(c => c.User).ToListAsync();
         }
+
+        public Task AddCustomerAsync(ICustomerRepository customer)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<IEnumerable<ICustomerRepository>> ICustomerRepository.GetCustomersWithUsersAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -50,5 +50,10 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 
             return results;
         }
+
+        Task<IEnumerable<(ICustomerRepository Customer, Vehicle PrimaryVehicle)>> ICustomerSearchRepository.SearchCustomersAsync(string searchTerm)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

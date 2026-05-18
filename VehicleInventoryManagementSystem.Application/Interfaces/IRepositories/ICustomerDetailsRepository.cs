@@ -7,6 +7,6 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
     public interface ICustomerDetailsRepository
     {
         
-        Task<(Customer Customer, Vehicle PrimaryVehicle, List<string> ServiceHistory)> GetCustomerDataAsync(int customerId);
+        Task<(ICustomerRepository Customer, Vehicle PrimaryVehicle, List<string> ServiceHistory)> GetCustomerDataAsync(int customerId);
     }
 }

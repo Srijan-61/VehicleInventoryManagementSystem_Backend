@@ -7,7 +7,7 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
     // Defines the operations we need to save customer and vehicle data to the database
     public interface ICustomerRegistrationRepository
     {
-        Task AddCustomerAsync(Customer customer);
+        Task AddCustomerAsync(ICustomerRepository customer);
         Task AddVehicleAsync(Vehicle vehicle);
         Task SaveChangesAsync();
     }
