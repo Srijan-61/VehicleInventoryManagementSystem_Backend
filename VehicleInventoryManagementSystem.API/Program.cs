@@ -3,19 +3,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Data;
-using VehicleInventoryManagementSystem.Application.Interfaces.Customer;
-using VehicleInventoryManagementSystem.Application.Interfaces.Notifications;
-using VehicleInventoryManagementSystem.Application.Interfaces.PurchaseInvoice;
-using VehicleInventoryManagementSystem.Domain.Models;
-using VehicleInventoryManagementSystem.Infrastructure.Presistance;
-using VehicleInventoryManagementSystem.Infrastructure.Services.Customer;
-using VehicleInventoryManagementSystem.Infrastructure.Services.Notifications;
-using VehicleInventoryManagementSystem.Infrastructure.Services.PurchaseInvoice;
 using System.Security.Claims;
 using System.Text;
 using VehicleInventoryManagementSystem.Application.DTOs.Auth;
 using VehicleInventoryManagementSystem.Application.Interfaces.IRepositories;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
+using VehicleInventoryManagementSystem.Domain.Models;
+using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 using VehicleInventoryManagementSystem.Infrastructure.Repositories;
 using VehicleInventoryManagementSystem.Infrastructure.Services;
 
@@ -24,7 +18,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -37,14 +30,6 @@ builder.Services.AddIdentity<User, Role>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// F12 � Customer registration
-builder.Services.AddScoped<VehicleInventoryManagementSystem.Infrastructure.Services.CustomerRegistrationService>();
-
-// F4 � Purchase invoices
-builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
-
-// F15 � Notifications (low-stock alerts; email reminders to follow)
-builder.Services.AddScoped<INotificationService, NotificationService>();
 // Bind JwtSettings to the DI container
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
@@ -89,7 +74,8 @@ builder.Services.AddScoped<ICustomerSearchRepository, CustomerSearchRepository>(
 builder.Services.AddScoped<ICustomerSearchService, CustomerSearchService>();
 
 builder.Services.AddScoped<ICustomerRegistrationRepository, CustomerRegistrationRepository>();
-builder.Services.AddScoped<VehicleInventoryManagementSystem.Application.Interfaces.Customer.ICustomerRegistrationService, VehicleInventoryManagementSystem.Infrastructure.Services.Customer.CustomerRegistrationService>();
+builder.Services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
+
 builder.Services.AddScoped<ISalesFeatureRepository, SalesFeatureRepository>();
 builder.Services.AddScoped<ISalesFeatureService, SalesFeatureService>();
 builder.Services.AddAuthentication(options =>

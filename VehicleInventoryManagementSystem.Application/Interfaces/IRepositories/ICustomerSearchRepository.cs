@@ -6,6 +6,6 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
 {
     public interface ICustomerSearchRepository
     {
-        Task<IEnumerable<(ICustomerRepository Customer, Vehicle PrimaryVehicle)>> SearchCustomersAsync(string searchTerm);
+        Task<IEnumerable<(Customer Customer, Vehicle PrimaryVehicle)>> SearchCustomersAsync(string searchTerm);
     }
 }

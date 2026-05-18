@@ -1,14 +1,6 @@
-@HostAddress = https://localhost:7111
+@VehicleInventoryManagementSystem.API_HostAddress = http://localhost:5251
 
-### Register a new customer
-POST {{HostAddress}}/api/customers/register
-Content-Type: application/json
+GET {{VehicleInventoryManagementSystem.API_HostAddress}}/weatherforecast/
+Accept: application/json
 
-{
-  "fullName": "Rijan Test",
-  "email": "rijan.test@example.com",
-  "phoneNumber": "9800000000",
-  "address": "Kathmandu, Nepal",
-  "password": "TestPass123!",
-  "confirmPassword": "TestPass123!"
-}
+###

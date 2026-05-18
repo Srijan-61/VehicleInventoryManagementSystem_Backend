@@ -7,9 +7,9 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
 {
     public interface ICustomerRepository
     {
-        Task AddCustomerAsync(ICustomerRepository customer);
+        Task AddCustomerAsync(Customer customer);
         Task SaveChangesAsync();
 
-        Task<IEnumerable<ICustomerRepository>> GetCustomersWithUsersAsync();
+        Task<IEnumerable<Customer>> GetCustomersWithUsersAsync();
     }
 }
