@@ -51,10 +51,5 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
-
-        Task<IEnumerable<ICustomerRepository>> ISalesFeatureRepository.GetCustomersWithUsersAsync()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

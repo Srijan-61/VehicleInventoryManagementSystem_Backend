@@ -9,9 +9,8 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
         Task<bool> VendorExistsAsync(int vendorId);
         Task<bool> AdminExistsAsync(int adminId);
 
-        // Ensure PurchaseInvoice and PurchaseItem are types, not namespaces
-        Task AddPurchaseInvoiceAsync(VehicleInventoryManagementSystem.Domain.Models.PurchaseInvoice invoice);
-        Task AddPurchaseItemAsync(VehicleInventoryManagementSystem.Domain.Models.PurchaseItem item);
+        Task AddPurchaseInvoiceAsync(PurchaseInvoice invoice);
+        Task AddPurchaseItemAsync(PurchaseItem item);
 
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();

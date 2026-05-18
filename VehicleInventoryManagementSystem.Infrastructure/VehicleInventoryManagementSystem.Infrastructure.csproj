@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VehicleInventoryManagementSystem.Application\VehicleInventoryManagementSystem.Application.csproj" />
     <ProjectReference Include="..\VehicleInventoryManagementSystem.Domain\VehicleInventoryManagementSystem.Domain.csproj" />
     <ProjectReference Include="..\VehicleInventoryManagementSystem.Application\VehicleInventoryManagementSystem.Application.csproj" />
   </ItemGroup>
