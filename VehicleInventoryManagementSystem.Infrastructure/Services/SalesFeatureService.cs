@@ -108,6 +108,20 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             });
         }
 
+        // Returns available parts with their names and stock for the dropdown on the sales form
+        public async Task<IEnumerable<PartDropdownDto>> GetPartsForDropdownAsync()
+        {
+            var parts = await _salesFeatureRepository.GetAvailablePartsAsync();
+
+            return parts.Select(p => new PartDropdownDto
+            {
+                Part_ID = p.Part_ID,
+                Part_Name = p.Part_Name,
+                Unit_Price = p.Unit_Price,
+                Stock_Quantity = p.Stock_Quantity
+            });
+        }
+
         // Finds the Staff_ID for the currently logged-in user so we can link the invoice to them
         public async Task<int> GetCurrentStaffIdAsync(string userId)
         {
@@ -115,6 +129,20 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             return staff?.Staff_ID ?? 0;
         }
 
+        // Returns recent sales invoices
+        public async Task<IEnumerable<RecentSalesInvoiceDto>> GetRecentInvoicesAsync(int count = 10)
+        {
+            var invoices = await _salesFeatureRepository.GetRecentInvoicesAsync(count);
 
+            return invoices.Select(i => new RecentSalesInvoiceDto
+            {
+                Invoice_No = i.Sales_Invoice_No,
+                Sales_Date = i.Sales_Date,
+                Customer_Name = i.Customer?.User?.FullName ?? "Unknown Customer",
+                Staff_Name = i.Staff?.User?.FullName ?? "Unknown Staff",
+                Final_Total = i.Final_Total,
+                Is_Paid = i.Is_Paid
+            });
+        }
     }
 }
