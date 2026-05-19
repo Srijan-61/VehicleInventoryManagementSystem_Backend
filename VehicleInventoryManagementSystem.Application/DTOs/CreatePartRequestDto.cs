@@ -5,9 +5,6 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
     public class CreatePartRequestDto
     {
         [Required]
-        public int Customer_ID { get; set; }
-
-        [Required]
         [StringLength(100)]
         public string Requested_Part_Name { get; set; } = string.Empty;
 

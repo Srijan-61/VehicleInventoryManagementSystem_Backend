@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using VehicleInventoryManagementSystem.Application.DTOs;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
+using System.Security.Claims;
 
 namespace VehicleInventoryManagementSystem.API.Controllers
 {
@@ -32,7 +33,19 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _adminPartsService.PurchasePartsAsync(dto);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid admin token." });
+
+            var result = await _adminPartsService.PurchasePartsAsync(dto, userId);
+
+            var successProperty = result.GetType().GetProperty("success");
+            var isSuccess = successProperty != null && (bool)successProperty.GetValue(result)!;
+
+            if (!isSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
