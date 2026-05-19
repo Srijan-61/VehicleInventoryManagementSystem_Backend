@@ -5,9 +5,6 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 {
-    /// <summary>
-    /// Reads invoice, customer, staff, and item details from the database for invoice email.
-    /// </summary>
     public class InvoiceEmailRepository : IInvoiceEmailRepository
     {
         private readonly AppDbContext _context;
@@ -17,14 +14,35 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<InvoiceEmailDetailsDto?> GetInvoiceEmailDetailsAsync(int salesInvoiceNo)
+        public async Task<List<CustomerInvoiceDropdownDto>> GetInvoicesByCustomerAsync(int customerId)
+        {
+            return await _context.SalesInvoices
+                .AsNoTracking()
+                .Where(invoice => invoice.Customer_ID == customerId)
+                .OrderByDescending(invoice => invoice.Sales_Date)
+                .Select(invoice => new CustomerInvoiceDropdownDto
+                {
+                    Sales_Invoice_No = invoice.Sales_Invoice_No,
+                    Sales_Date = invoice.Sales_Date,
+                    Final_Total = invoice.Final_Total,
+                    Is_Paid = invoice.Is_Paid
+                })
+                .ToListAsync();
+        }
+
+        public async Task<InvoiceEmailDetailsDto?> GetInvoiceEmailDetailsAsync(
+            int customerId,
+            int salesInvoiceNo)
         {
             var invoice = await _context.SalesInvoices
                 .AsNoTracking()
-                .Where(invoice => invoice.Sales_Invoice_No == salesInvoiceNo)
+                .Where(invoice =>
+                    invoice.Customer_ID == customerId &&
+                    invoice.Sales_Invoice_No == salesInvoiceNo)
                 .Select(invoice => new InvoiceEmailDetailsDto
                 {
                     Sales_Invoice_No = invoice.Sales_Invoice_No,
+                    Customer_ID = invoice.Customer_ID,
                     CustomerName = invoice.Customer.User.FullName ?? "Unknown Customer",
                     CustomerEmail = invoice.Customer.User.Email ?? string.Empty,
                     CustomerPhone = invoice.Customer.User.PhoneNumber,
