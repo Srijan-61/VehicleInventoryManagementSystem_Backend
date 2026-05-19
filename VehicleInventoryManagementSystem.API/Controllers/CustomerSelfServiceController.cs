@@ -1,96 +1,136 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using VehicleInventoryManagementSystem.Application.DTOs;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 
 namespace VehicleInventoryManagementSystem.API.Controllers
 {
-    // This controller handles all customer self-service features such as booking appointments, requesting parts, and submitting reviews
     [ApiController]
     [Route("api/customer")]
+    [Authorize(Roles = "Customer")]
     public class CustomerSelfServiceController : ControllerBase
     {
-        // Service layer dependency (business logic)
         private readonly ICustomerSelfService _customerSelfService;
+        private readonly ILogger<CustomerSelfServiceController> _logger;
 
-        // Constructor injection
-        public CustomerSelfServiceController(ICustomerSelfService customerSelfService)
+        public CustomerSelfServiceController(
+            ICustomerSelfService customerSelfService,
+            ILogger<CustomerSelfServiceController> logger)
         {
             _customerSelfService = customerSelfService;
+            _logger = logger;
         }
 
-        // BOOK SERVICE APPOINTMENT
         [HttpPost("appointments")]
-        public async Task<IActionResult> BookAppointment(CreateAppointmentDto dto)
+        public async Task<IActionResult> BookAppointment(
+            [FromBody] CreateAppointmentDto dto)
         {
-            // Validate incoming request body
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Call service layer
-            var result = await _customerSelfService.BookAppointmentAsync(dto);
+            var userId = GetLoggedInUserId();
 
-            // Return BadRequest only for specific validation errors
-            if (result == "Vehicle not found for this customer." ||
-                result == "Appointment date must be in the future." ||
-                result == "Service type is required.")
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid customer token." });
+
+            try
             {
-                return BadRequest(new { message = result });
-            }
+                var result = await _customerSelfService
+                    .BookAppointmentAsync(dto, userId);
 
-            // Success response
-            return Ok(new { message = result });
+                if (IsValidationError(result))
+                    return BadRequest(new { message = result });
+
+                return Ok(new { message = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while booking appointment.");
+
+                return StatusCode(500, new
+                {
+                    message = "Unable to book appointment. Please try again later."
+                });
+            }
         }
 
-        // REQUEST UNAVAILABLE PART
-        
         [HttpPost("part-requests")]
-        public async Task<IActionResult> RequestUnavailablePart(CreatePartRequestDto dto)
+        public async Task<IActionResult> RequestUnavailablePart(
+            [FromBody] CreatePartRequestDto dto)
         {
-            // Validate request
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Call service
-            var result = await _customerSelfService.RequestUnavailablePartAsync(dto);
+            var userId = GetLoggedInUserId();
 
-            // IMPORTANT:
-            // Avoid using Contains("available") because "Unavailable" also contains "available"
-            // So we use exact message matching
-            if (result == "Customer not found." ||
-                result == "Requested part name is required." ||
-                result == "Requested quantity must be greater than zero." ||
-                result == "This part is currently available in stock.")
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid customer token." });
+
+            try
             {
-                return BadRequest(new { message = result });
-            }
+                var result = await _customerSelfService
+                    .RequestUnavailablePartAsync(dto, userId);
 
-            // Success
-            return Ok(new { message = result });
+                if (IsValidationError(result))
+                    return BadRequest(new { message = result });
+
+                return Ok(new { message = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while requesting part.");
+
+                return StatusCode(500, new
+                {
+                    message = "Unable to submit part request. Please try again later."
+                });
+            }
         }
 
-        // SUBMIT SERVICE REVIEW
-       
         [HttpPost("reviews")]
-        public async Task<IActionResult> SubmitReview(CreateReviewDto dto)
+        public async Task<IActionResult> SubmitReview(
+            [FromBody] CreateReviewDto dto)
         {
-            // Validate input
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Call service
-            var result = await _customerSelfService.SubmitReviewAsync(dto);
+            var userId = GetLoggedInUserId();
 
-            // Handle validation errors
-            if (result == "Appointment not found for this customer." ||
-                result == "This appointment has already been reviewed." ||
-                result == "Rating must be between 1 and 5." ||
-                result == "Review comment is required.")
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid customer token." });
+
+            try
             {
-                return BadRequest(new { message = result });
-            }
+                var result = await _customerSelfService
+                    .SubmitReviewAsync(dto, userId);
 
-            // Success response
-            return Ok(new { message = result });
+                if (IsValidationError(result))
+                    return BadRequest(new { message = result });
+
+                return Ok(new { message = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while submitting review.");
+
+                return StatusCode(500, new
+                {
+                    message = "Unable to submit review. Please try again later."
+                });
+            }
+        }
+
+        private string? GetLoggedInUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private static bool IsValidationError(string result)
+        {
+            return result != "Appointment booked successfully." &&
+                   result != "Unavailable part request submitted successfully." &&
+                   result != "Review submitted successfully.";
         }
     }
 }
