@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using VehicleInventoryManagementSystem.Application.DTOs;
 using VehicleInventoryManagementSystem.Application.Interfaces.IRepositories;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
@@ -6,8 +7,6 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Services
 {
-    // This service contains all the business logic for sales and POS (Features 7 and 16)
-    // It handles creating invoices, applying discounts, updating stock, and fetching helper data
     public class SalesFeatureService : ISalesFeatureService
     {
         private readonly ISalesFeatureRepository _salesFeatureRepository;
@@ -21,39 +20,88 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             _context = context;
         }
 
-        // Main method that creates a sales invoice - it loops through each item, checks stock,
-        // calculates totals, applies the loyalty discount if applicable, and saves everything
-        public async Task<(bool Succeeded, SalesInvoiceResultDto? Data, IEnumerable<string> Errors)> CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto)
+        public async Task<(bool Succeeded, SalesInvoiceResultDto? Data, IEnumerable<string> Errors)>
+            CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            var validationErrors = ValidateCreateInvoiceDto(dto);
+
+            if (validationErrors.Any())
+                return (false, null, validationErrors);
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
+                var customerExists = await _context.Customers
+                    .AnyAsync(c => c.Customer_ID == dto.Customer_ID);
+
+                if (!customerExists)
+                    return (false, null, new[] { "Customer not found." });
+
+                var staffExists = await _context.StaffProfiles
+                    .AnyAsync(s => s.Staff_ID == dto.Staff_ID);
+
+                if (!staffExists)
+                    return (false, null, new[] { "Staff profile not found." });
+
                 decimal subTotal = 0;
                 var salesItems = new List<SalesItem>();
-                var resultItems = new List<SalesItemResultDto>(); // created invoice store for frontend display
+                var resultItems = new List<SalesItemResultDto>();
 
                 foreach (var item in dto.Items)
                 {
                     var part = await _salesFeatureRepository.GetPartByIdAsync(item.Part_ID);
-                    if (part == null || part.Stock_Quantity < item.Quantity)
-                        throw new Exception($"Part {item.Part_ID} is unavailable or out of stock.");
 
-                    decimal itemTotal = part.Unit_Price * item.Quantity;
+                    if (part == null)
+                    {
+                        return (false, null, new[] { $"Part ID {item.Part_ID} was not found." });
+                    }
+
+                    if (!part.IsAvailable || part.Stock_Quantity <= 0)
+                    {
+                        return (false, null, new[] { $"{part.Part_Name} is not available." });
+                    }
+
+                    if (part.Stock_Quantity < item.Quantity)
+                    {
+                        return (false, null, new[]
+                        {
+                            $"{part.Part_Name} has only {part.Stock_Quantity} item(s) in stock."
+                        });
+                    }
+
+                    var itemTotal = part.Unit_Price * item.Quantity;
                     subTotal += itemTotal;
 
-                    // save this item for the database
-                    salesItems.Add(new SalesItem { Part_ID = part.Part_ID, Quantity_Sold = item.Quantity, Unit_Price = part.Unit_Price, Total_Price = itemTotal });
+                    salesItems.Add(new SalesItem
+                    {
+                        Part_ID = part.Part_ID,
+                        Quantity_Sold = item.Quantity,
+                        Unit_Price = part.Unit_Price,
+                        Total_Price = itemTotal
+                    });
 
-                    // also save it for the response so the frontend can display the part name
-                    resultItems.Add(new SalesItemResultDto { Part_ID = part.Part_ID, Part_Name = part.Part_Name, Quantity = item.Quantity, Unit_Price = part.Unit_Price, Total_Price = itemTotal });
+                    resultItems.Add(new SalesItemResultDto
+                    {
+                        Part_ID = part.Part_ID,
+                        Part_Name = part.Part_Name,
+                        Quantity = item.Quantity,
+                        Unit_Price = part.Unit_Price,
+                        Total_Price = itemTotal
+                    });
 
                     part.Stock_Quantity -= item.Quantity;
+                    part.IsAvailable = part.Stock_Quantity > 0;
+                    part.Updated_At = DateTime.UtcNow;
+
                     _salesFeatureRepository.UpdatePart(part);
                 }
 
-                // Feature 16: if the subtotal is over 5000, we give a 10% loyalty discount
-                decimal discount = subTotal > 5000 ? subTotal * 0.10m : 0;
-                decimal finalTotal = subTotal - discount;
+                if (!salesItems.Any())
+                    return (false, null, new[] { "Invoice must contain at least one sales item." });
+
+                var discount = subTotal > 5000 ? subTotal * 0.10m : 0;
+                var finalTotal = subTotal - discount;
 
                 var invoice = new SalesInvoice
                 {
@@ -64,19 +112,23 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     Discount_Amount = discount,
                     Final_Total = finalTotal,
                     Is_Paid = dto.Is_Paid,
+                    Credit_Due_Date = dto.Is_Paid ? null : DateTime.UtcNow.AddDays(30),
                     Created_At = DateTime.UtcNow
                 };
 
                 await _salesFeatureRepository.AddInvoiceAsync(invoice);
                 await _salesFeatureRepository.SaveChangesAsync();
 
-                foreach (var si in salesItems) si.Sales_Invoice_No = invoice.Sales_Invoice_No;
+                foreach (var salesItem in salesItems)
+                {
+                    salesItem.Sales_Invoice_No = invoice.Sales_Invoice_No;
+                }
+
                 await _salesFeatureRepository.AddSalesItemsAsync(salesItems);
                 await _salesFeatureRepository.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 
-                // put together the response with all the invoice details
                 var responseData = new SalesInvoiceResultDto
                 {
                     Invoice_No = invoice.Sales_Invoice_No,
@@ -84,7 +136,9 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     Discount_Amount = discount,
                     Final_Total = finalTotal,
                     Items = resultItems,
-                    Message = discount > 0 ? "10% Loyalty discount applied!" : "Invoice created successfully."
+                    Message = discount > 0
+                        ? "Invoice created successfully. 10% loyalty discount applied."
+                        : "Invoice created successfully."
                 };
 
                 return (true, responseData, Enumerable.Empty<string>());
@@ -92,11 +146,15 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return (false, null, new[] { ex.Message });
+
+                return (false, null, new[]
+                {
+                    "An unexpected error occurred while creating the sales invoice.",
+                    ex.Message
+                });
             }
         }
 
-        // Returns all customers with their names for the dropdown on the sales form
         public async Task<IEnumerable<CustomerDropdownDto>> GetCustomersForDropdownAsync()
         {
             var customers = await _salesFeatureRepository.GetCustomersWithUsersAsync();
@@ -108,7 +166,6 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             });
         }
 
-        // Returns available parts with their names and stock for the dropdown on the sales form
         public async Task<IEnumerable<PartDropdownDto>> GetPartsForDropdownAsync()
         {
             var parts = await _salesFeatureRepository.GetAvailablePartsAsync();
@@ -122,17 +179,18 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             });
         }
 
-        // Finds the Staff_ID for the currently logged-in user so we can link the invoice to them
         public async Task<int> GetCurrentStaffIdAsync(string userId)
         {
             var staff = await _salesFeatureRepository.GetStaffByUserIdAsync(userId);
             return staff?.Staff_ID ?? 0;
         }
 
-        // Returns recent sales invoices
         public async Task<IEnumerable<RecentSalesInvoiceDto>> GetRecentInvoicesAsync(int count = 10)
         {
-            var invoices = await _salesFeatureRepository.GetRecentInvoicesAsync(count);
+            var safeCount = count <= 0 ? 10 : count;
+            safeCount = safeCount > 50 ? 50 : safeCount;
+
+            var invoices = await _salesFeatureRepository.GetRecentInvoicesAsync(safeCount);
 
             return invoices.Select(i => new RecentSalesInvoiceDto
             {
@@ -143,6 +201,34 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 Final_Total = i.Final_Total,
                 Is_Paid = i.Is_Paid
             });
+        }
+
+        private static List<string> ValidateCreateInvoiceDto(CreateSalesInvoiceDto dto)
+        {
+            var errors = new List<string>();
+
+            if (dto.Customer_ID <= 0)
+                errors.Add("Valid customer is required.");
+
+            if (dto.Staff_ID <= 0)
+                errors.Add("Valid staff profile is required.");
+
+            if (dto.Items == null || !dto.Items.Any())
+            {
+                errors.Add("At least one sales item is required.");
+                return errors;
+            }
+
+            foreach (var item in dto.Items)
+            {
+                if (item.Part_ID <= 0)
+                    errors.Add("Valid part is required.");
+
+                if (item.Quantity <= 0)
+                    errors.Add("Quantity must be at least 1.");
+            }
+
+            return errors;
         }
     }
 }
