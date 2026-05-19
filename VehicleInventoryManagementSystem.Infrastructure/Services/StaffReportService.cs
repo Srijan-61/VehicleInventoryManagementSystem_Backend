@@ -5,7 +5,7 @@ using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 namespace VehicleInventoryManagementSystem.Infrastructure.Services
 {
     /// <summary>
-    /// Handles business logic for staff reports.
+    /// Handles business rules and validation for staff reports.
     /// </summary>
     public class StaffReportService : IStaffReportService
     {
@@ -20,24 +20,53 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             _staffReportRepository = staffReportRepository;
         }
 
-        public async Task<List<RegularCustomerReportDto>> GetRegularCustomersAsync(int minimumPurchases, int limit)
+        public async Task<List<RegularCustomerReportDto>> GetRegularCustomersAsync(
+            int minimumPurchases,
+            int limit,
+            DateTime? startDate,
+            DateTime? endDate)
         {
-            minimumPurchases = minimumPurchases <= 0 ? DefaultMinimumPurchases : minimumPurchases;
+            minimumPurchases = minimumPurchases <= 0
+                ? DefaultMinimumPurchases
+                : minimumPurchases;
+
             limit = NormalizeLimit(limit);
 
-            return await _staffReportRepository.GetRegularCustomersAsync(minimumPurchases, limit);
+            ValidateDateRange(startDate, endDate);
+
+            return await _staffReportRepository.GetRegularCustomersAsync(
+                minimumPurchases,
+                limit,
+                startDate,
+                endDate
+            );
         }
 
-        public async Task<List<HighSpenderReportDto>> GetHighSpendersAsync(int limit)
+        public async Task<List<HighSpenderReportDto>> GetHighSpendersAsync(
+            int limit,
+            decimal? minimumSpent,
+            DateTime? startDate,
+            DateTime? endDate)
         {
             limit = NormalizeLimit(limit);
 
-            return await _staffReportRepository.GetHighSpendersAsync(limit);
+            if (minimumSpent.HasValue && minimumSpent.Value < 0)
+                minimumSpent = 0;
+
+            ValidateDateRange(startDate, endDate);
+
+            return await _staffReportRepository.GetHighSpendersAsync(
+                limit,
+                minimumSpent,
+                startDate,
+                endDate
+            );
         }
 
-        public async Task<List<PendingCreditReportDto>> GetPendingCreditsAsync()
+        public async Task<List<PendingCreditReportDto>> GetPendingCreditsAsync(
+            bool overdueOnly)
         {
-            return await _staffReportRepository.GetPendingCreditsAsync();
+            return await _staffReportRepository.GetPendingCreditsAsync(overdueOnly);
         }
 
         private static int NormalizeLimit(int limit)
@@ -46,6 +75,16 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 return DefaultLimit;
 
             return limit > MaximumLimit ? MaximumLimit : limit;
+        }
+
+        private static void ValidateDateRange(DateTime? startDate, DateTime? endDate)
+        {
+            if (startDate.HasValue &&
+                endDate.HasValue &&
+                startDate.Value.Date > endDate.Value.Date)
+            {
+                throw new ArgumentException("Start date cannot be after end date.");
+            }
         }
     }
 }
