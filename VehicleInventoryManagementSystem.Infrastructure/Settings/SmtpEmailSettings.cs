@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace VehicleInventoryManagementSystem.Infrastructure.Services
+﻿namespace VehicleInventoryManagementSystem.Infrastructure.Settings
 {
+    /// <summary>
+    /// Represents SMTP configuration values from appsettings.json.
+    /// This is a settings class, not a service.
+    /// </summary>
     public class SmtpEmailSettings
     {
         public string Host { get; set; } = string.Empty;

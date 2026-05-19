@@ -8,7 +8,7 @@ using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 namespace VehicleInventoryManagementSystem.Infrastructure.Services
 {
     /// <summary>
-    /// Handles validation and business logic for sending invoice emails.
+    /// Handles invoice email business logic and validation.
     /// </summary>
     public class InvoiceEmailService : IInvoiceEmailService
     {
@@ -26,30 +26,86 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task SendInvoiceEmailAsync(int salesInvoiceNo)
+        /// <summary>
+        /// Returns all invoices of selected customer.
+        /// </summary>
+        public async Task<List<CustomerInvoiceDropdownDto>> GetInvoicesByCustomerAsync(int customerId)
         {
+            if (customerId <= 0)
+                throw new ArgumentException("Valid customer ID is required.");
+
+            return await _invoiceEmailRepository.GetInvoicesByCustomerAsync(customerId);
+        }
+
+        /// <summary>
+        /// Returns full invoice details for preview.
+        /// </summary>
+        public async Task<InvoiceEmailDetailsDto?> GetInvoiceEmailDetailsAsync(
+            int customerId,
+            int salesInvoiceNo)
+        {
+            if (customerId <= 0)
+                throw new ArgumentException("Valid customer ID is required.");
+
             if (salesInvoiceNo <= 0)
                 throw new ArgumentException("Valid sales invoice number is required.");
 
-            var invoice = await _invoiceEmailRepository.GetInvoiceEmailDetailsAsync(salesInvoiceNo);
+            return await _invoiceEmailRepository.GetInvoiceEmailDetailsAsync(
+                customerId,
+                salesInvoiceNo
+            );
+        }
+
+        /// <summary>
+        /// Sends invoice email to customer.
+        /// </summary>
+        public async Task SendInvoiceEmailAsync(SendInvoiceEmailRequestDto request)
+        {
+            if (request.Customer_ID <= 0)
+                throw new ArgumentException("Valid customer ID is required.");
+
+            if (request.Sales_Invoice_No <= 0)
+                throw new ArgumentException("Valid sales invoice number is required.");
+
+            var invoice = await _invoiceEmailRepository.GetInvoiceEmailDetailsAsync(
+                request.Customer_ID,
+                request.Sales_Invoice_No
+            );
 
             if (invoice == null)
-                throw new KeyNotFoundException("Sales invoice was not found.");
+                throw new KeyNotFoundException(
+                    "Invoice was not found for the selected customer."
+                );
 
             if (string.IsNullOrWhiteSpace(invoice.CustomerEmail))
-                throw new InvalidOperationException("Customer email address is missing.");
+                throw new InvalidOperationException(
+                    "Customer email address is missing."
+                );
 
             if (invoice.Items.Count == 0)
-                throw new InvalidOperationException("Invoice has no items to send.");
+                throw new InvalidOperationException(
+                    "Invoice has no items to send."
+                );
 
             var subject = $"Sales Invoice #{invoice.Sales_Invoice_No}";
             var body = BuildInvoiceEmailBody(invoice);
 
-            _logger.LogInformation("Sending invoice email for invoice no {InvoiceNo}.", salesInvoiceNo);
+            _logger.LogInformation(
+                "Sending invoice email for invoice no {InvoiceNo} to customer {CustomerId}.",
+                request.Sales_Invoice_No,
+                request.Customer_ID
+            );
 
-            await _emailSenderService.SendEmailAsync(invoice.CustomerEmail, subject, body);
+            await _emailSenderService.SendEmailAsync(
+                invoice.CustomerEmail,
+                subject,
+                body
+            );
         }
 
+        /// <summary>
+        /// Builds professional HTML invoice email body.
+        /// </summary>
         private static string BuildInvoiceEmailBody(InvoiceEmailDetailsDto invoice)
         {
             var itemsHtml = new StringBuilder();
@@ -71,18 +127,31 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             return $@"
                 <html>
                 <body style='font-family: Arial, sans-serif; color: #333;'>
+
                     <h2>Vehicle Parts Sales Invoice</h2>
 
                     <p>Dear {WebUtility.HtmlEncode(invoice.CustomerName)},</p>
-                    <p>Your sales invoice details are listed below.</p>
+
+                    <p>
+                        Thank you for choosing our vehicle service center.
+                        Your invoice details are listed below.
+                    </p>
+
+                    <hr/>
 
                     <p><strong>Invoice No:</strong> {invoice.Sales_Invoice_No}</p>
                     <p><strong>Sales Date:</strong> {invoice.Sales_Date:yyyy-MM-dd}</p>
                     <p><strong>Processed By:</strong> {WebUtility.HtmlEncode(invoice.StaffName)}</p>
                     <p><strong>Payment Status:</strong> {paymentStatus}</p>
 
-                    <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; width: 100%;'>
-                        <thead>
+                    <br/>
+
+                    <table border='1'
+                           cellpadding='8'
+                           cellspacing='0'
+                           style='border-collapse: collapse; width: 100%;'>
+
+                        <thead style='background-color:#f2f2f2;'>
                             <tr>
                                 <th>Part</th>
                                 <th>Brand</th>
@@ -91,17 +160,31 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                                 <th>Total</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             {itemsHtml}
                         </tbody>
                     </table>
 
-                    <h3>Summary</h3>
+                    <br/>
+
+                    <h3>Invoice Summary</h3>
+
                     <p><strong>Sub Total:</strong> {invoice.Sub_Total:N2}</p>
                     <p><strong>Discount:</strong> {invoice.Discount_Amount:N2}</p>
                     <p><strong>Final Total:</strong> {invoice.Final_Total:N2}</p>
 
-                    <p>Thank you for choosing our vehicle service center.</p>
+                    <hr/>
+
+                    <p>
+                        If you have any questions regarding this invoice,
+                        please contact our support team.
+                    </p>
+
+                    <p>
+                        Thank you for your business.
+                    </p>
+
                 </body>
                 </html>";
         }

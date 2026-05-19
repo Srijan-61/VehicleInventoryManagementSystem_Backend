@@ -8,9 +8,6 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
         public int Vendor_ID { get; set; }
 
         [Required]
-        public int Admin_ID { get; set; }
-
-        [Required]
         public string Payment_Status { get; set; } = string.Empty;
 
         [Required]

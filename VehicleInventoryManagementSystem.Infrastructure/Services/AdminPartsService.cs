@@ -26,8 +26,12 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
         }
 
         // Handles purchase process including stock update and invoice creation.
-        public async Task<object> PurchasePartsAsync(CreatePurchaseDto dto)
+        public async Task<object> PurchasePartsAsync(CreatePurchaseDto dto, string userId)
         {
+            // Checks if logged-in admin user id exists.
+            if (string.IsNullOrWhiteSpace(userId))
+                return new { success = false, message = "Invalid admin token." };
+
             // Checks if items list is empty.
             if (dto.Items == null || !dto.Items.Any())
                 return new { success = false, message = "At least one purchase item is required." };
@@ -41,12 +45,13 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             if (!vendorExists)
                 return new { success = false, message = "Vendor not found." };
 
-            // Checks admin exists.
-            var adminExists = await _adminPartsRepository.AdminExistsAsync(dto.Admin_ID);
-            if (!adminExists)
-                return new { success = false, message = "Admin not found." };
+            // Gets admin id from logged-in JWT user id.
+            var adminId = await _adminPartsRepository.GetAdminIdByUserIdAsync(userId);
 
-            // Starts transaction because multiple operations are involved.
+            if (adminId == null)
+                return new { success = false, message = "Admin profile not found." };
+
+            // Starts transaction because stock, invoice, and items must save together.
             await _adminPartsRepository.BeginTransactionAsync();
 
             try
@@ -58,9 +63,39 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 {
                     // Gets part from database.
                     var part = await _adminPartsRepository.GetPartByIdAsync(item.Part_ID);
-
+                    // Rollback is needed because transaction has already started.
                     if (part == null)
-                        return new { success = false, message = $"Part ID {item.Part_ID} not found." };
+                    {
+                        await _adminPartsRepository.RollbackTransactionAsync();
+
+                        return new
+                        {
+                            success = false,
+                            message = $"Part ID {item.Part_ID} not found."
+                        };
+                    }
+                    // Extra validation for safety.
+                    if (item.Quantity_Purchased <= 0)
+                    {
+                        await _adminPartsRepository.RollbackTransactionAsync();
+
+                        return new
+                        {
+                            success = false,
+                            message = "Quantity purchased must be greater than zero."
+                        };
+                    }
+
+                    if (item.Purchase_Unit_Cost <= 0)
+                    {
+                        await _adminPartsRepository.RollbackTransactionAsync();
+
+                        return new
+                        {
+                            success = false,
+                            message = "Purchase unit cost must be greater than zero."
+                        };
+                    }
 
                     // Calculates cost of each item.
                     var lineTotal = item.Quantity_Purchased * item.Purchase_Unit_Cost;
@@ -85,7 +120,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 var invoice = new PurchaseInvoice
                 {
                     Vendor_ID = dto.Vendor_ID,
-                    Admin_ID = dto.Admin_ID,
+                    Admin_ID = adminId.Value,
                     Purchase_Date = DateTime.UtcNow,
                     Total_Cost = totalCost,
                     Payment_Status = dto.Payment_Status.Trim(),
@@ -95,7 +130,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 await _adminPartsRepository.AddPurchaseInvoiceAsync(invoice);
                 await _adminPartsRepository.SaveChangesAsync();
 
-                // Links items to invoice.
+                // Links all purchase items to generated purchase invoice number.
                 foreach (var purchaseItem in purchaseItems)
                 {
                     purchaseItem.Purchase_Invoice_No = invoice.Purchase_Invoice_No;
@@ -107,7 +142,11 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 // Saves all changes.
                 await _adminPartsRepository.CommitTransactionAsync();
 
-                _logger.LogInformation("Purchase invoice created successfully.");
+                _logger.LogInformation(
+                    "Purchase invoice {InvoiceNo} created successfully by admin {AdminId}.",
+                    invoice.Purchase_Invoice_No,
+                    adminId.Value
+                );
 
                 return new
                 {
@@ -119,7 +158,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                // Rolls back changes if error occurs.
+                // Rolls back stock, invoice, and item changes if any error occurs.
                 await _adminPartsRepository.RollbackTransactionAsync();
 
                 _logger.LogError(ex, "Error while purchasing parts.");
@@ -164,6 +203,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             if (part == null)
                 return "Part not found.";
 
+            // Soft delete keeps old sales and purchase history safe.
             part.IsAvailable = false;
             part.Stock_Quantity = 0;
             part.Updated_At = DateTime.UtcNow;
