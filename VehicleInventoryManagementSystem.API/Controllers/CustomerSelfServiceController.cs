@@ -124,7 +124,7 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             }
         }
 
-        // Gets vehicles owned by the logged-in customer.
+        // Get vehicles owned by the logged-in customer.
         [HttpGet("vehicles")]
         public async Task<IActionResult> GetVehicles()
         {
