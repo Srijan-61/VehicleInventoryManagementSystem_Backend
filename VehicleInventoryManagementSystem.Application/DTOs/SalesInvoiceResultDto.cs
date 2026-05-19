@@ -31,6 +31,8 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
         public string Customer_Name { get; set; } = string.Empty;
         public string Staff_Name { get; set; } = string.Empty;
         public decimal Final_Total { get; set; }
+        public decimal Sub_Total { get; set; }
+        public decimal Discount_Amount { get; set; }
         public bool Is_Paid { get; set; }
     }
 }

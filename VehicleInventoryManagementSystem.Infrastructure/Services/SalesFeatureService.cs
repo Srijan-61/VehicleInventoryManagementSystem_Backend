@@ -53,24 +53,15 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     var part = await _salesFeatureRepository.GetPartByIdAsync(item.Part_ID);
 
                     if (part == null)
-                    {
                         return (false, null, new[] { $"Part ID {item.Part_ID} was not found." });
-                    }
 
                     if (!part.IsAvailable || part.Stock_Quantity <= 0)
-                    {
                         return (false, null, new[] { $"{part.Part_Name} is not available." });
-                    }
 
                     if (part.Stock_Quantity < item.Quantity)
-                    {
-                        return (false, null, new[]
-                        {
-                            $"{part.Part_Name} has only {part.Stock_Quantity} item(s) in stock."
-                        });
-                    }
+                        return (false, null, new[] { $"{part.Part_Name} has only {part.Stock_Quantity} item(s) in stock." });
 
-                    var itemTotal = part.Unit_Price * item.Quantity;
+                    decimal itemTotal = part.Unit_Price * item.Quantity;
                     subTotal += itemTotal;
 
                     salesItems.Add(new SalesItem
@@ -100,8 +91,25 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 if (!salesItems.Any())
                     return (false, null, new[] { "Invoice must contain at least one sales item." });
 
-                var discount = subTotal > 5000 ? subTotal * 0.10m : 0;
-                var finalTotal = subTotal - discount;
+                decimal discount = 0;
+                if (dto.FlatDiscount.HasValue && dto.FlatDiscount.Value > 0)
+                {
+                    discount = dto.FlatDiscount.Value;
+                }
+                else if (dto.DiscountPercentage.HasValue && dto.DiscountPercentage.Value > 0)
+                {
+                    discount = subTotal * (dto.DiscountPercentage.Value / 100m);
+                }
+                else
+                {
+                    // 10% loyalty discount when subtotal exceeds 5000 and no explicit discount provided
+                    discount = subTotal > 5000 ? subTotal * 0.10m : 0;
+                }
+
+                if (discount > subTotal) discount = subTotal;
+                if (discount < 0) discount = 0;
+
+                decimal finalTotal = subTotal - discount;
 
                 var invoice = new SalesInvoice
                 {
@@ -127,6 +135,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 await _salesFeatureRepository.AddSalesItemsAsync(salesItems);
                 await _salesFeatureRepository.SaveChangesAsync();
 
+                // Commit the strict Database Transaction if all goes well
                 await transaction.CommitAsync();
 
                 var responseData = new SalesInvoiceResultDto
@@ -136,9 +145,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     Discount_Amount = discount,
                     Final_Total = finalTotal,
                     Items = resultItems,
-                    Message = discount > 0
-                        ? "Invoice created successfully. 10% loyalty discount applied."
-                        : "Invoice created successfully."
+                    Message = discount > 0 ? $"Discount of {discount:C} applied!" : "Invoice created successfully."
                 };
 
                 return (true, responseData, Enumerable.Empty<string>());
@@ -199,6 +206,8 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 Customer_Name = i.Customer?.User?.FullName ?? "Unknown Customer",
                 Staff_Name = i.Staff?.User?.FullName ?? "Unknown Staff",
                 Final_Total = i.Final_Total,
+                Sub_Total = i.Sub_Total,
+                Discount_Amount = i.Discount_Amount,
                 Is_Paid = i.Is_Paid
             });
         }
