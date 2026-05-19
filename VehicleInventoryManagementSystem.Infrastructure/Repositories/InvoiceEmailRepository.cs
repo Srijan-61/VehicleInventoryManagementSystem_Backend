@@ -5,6 +5,9 @@ using VehicleInventoryManagementSystem.Infrastructure.Presistance;
 
 namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Reads invoice details and invoice items for staff invoice email feature.
+    /// </summary>
     public class InvoiceEmailRepository : IInvoiceEmailRepository
     {
         private readonly AppDbContext _context;
@@ -14,11 +17,16 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             _context = context;
         }
 
+        // Gets invoices of selected customer that have at least one line item.
+        // Invoices with no items are excluded from the dropdown — they cannot be
+        // previewed or emailed meaningfully and are likely data anomalies.
         public async Task<List<CustomerInvoiceDropdownDto>> GetInvoicesByCustomerAsync(int customerId)
         {
             return await _context.SalesInvoices
                 .AsNoTracking()
-                .Where(invoice => invoice.Customer_ID == customerId)
+                .Where(invoice =>
+                    invoice.Customer_ID == customerId &&
+                    _context.SalesItems.Any(si => si.Sales_Invoice_No == invoice.Sales_Invoice_No))
                 .OrderByDescending(invoice => invoice.Sales_Date)
                 .Select(invoice => new CustomerInvoiceDropdownDto
                 {
@@ -30,6 +38,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        // Gets invoice header and items for invoice preview and email body.
         public async Task<InvoiceEmailDetailsDto?> GetInvoiceEmailDetailsAsync(
             int customerId,
             int salesInvoiceNo)
@@ -59,18 +68,23 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             if (invoice == null)
                 return null;
 
-            invoice.Items = await _context.SalesItems
-                .AsNoTracking()
-                .Where(item => item.Sales_Invoice_No == salesInvoiceNo)
-                .Select(item => new InvoiceEmailItemDto
+            // Load sold items for this invoice.
+            // This explicit join avoids empty navigation-property issues.
+            invoice.Items = await (
+                from salesItem in _context.SalesItems.AsNoTracking()
+                join part in _context.VehicleParts.AsNoTracking()
+                    on salesItem.Part_ID equals part.Part_ID
+                where salesItem.Sales_Invoice_No == salesInvoiceNo
+                orderby part.Part_Name
+                select new InvoiceEmailItemDto
                 {
-                    PartName = item.VehiclePart.Part_Name,
-                    Brand = item.VehiclePart.Brand,
-                    Quantity_Sold = item.Quantity_Sold,
-                    Unit_Price = item.Unit_Price,
-                    Total_Price = item.Total_Price
-                })
-                .ToListAsync();
+                    PartName = part.Part_Name,
+                    Brand = part.Brand,
+                    Quantity_Sold = salesItem.Quantity_Sold,
+                    Unit_Price = salesItem.Unit_Price,
+                    Total_Price = salesItem.Total_Price
+                }
+            ).ToListAsync();
 
             return invoice;
         }
