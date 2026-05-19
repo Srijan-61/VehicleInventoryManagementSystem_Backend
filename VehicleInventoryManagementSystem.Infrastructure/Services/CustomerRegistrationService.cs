@@ -52,10 +52,8 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
 
                 _logger.LogInformation("Attempting to create user for email: {Email}", dto.Email);
                 
-                // Auto-generate a secure password if not provided
-                var generatedPassword = string.IsNullOrWhiteSpace(dto.Password) 
-                    ? $"Cust@{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}!" 
-                    : dto.Password;
+                // Auto-generate a secure password for the customer account
+                var generatedPassword = $"Cust@{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}!";
 
                 var userResult = await _userManager.CreateAsync(user, generatedPassword);
                 if (!userResult.Succeeded)
