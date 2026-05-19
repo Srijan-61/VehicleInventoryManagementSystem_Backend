@@ -19,8 +19,9 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             _logger = logger;
         }
 
+        // Books a new appointment for the logged-in customer.
         public async Task<string> BookAppointmentAsync(
-            CreateAppointmentDto dto,
+            CustomerAppointmentDto dto,
             string userId)
         {
             var customerId = await GetLoggedInCustomerIdAsync(userId);
@@ -65,11 +66,12 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 customerId.Value
             );
 
-            return "Appointment booked successfully.";
+            return "Appointment request submitted successfully. Please wait for staff approval.";
         }
 
+        // Creates unavailable part request for the logged-in customer.
         public async Task<string> RequestUnavailablePartAsync(
-            CreatePartRequestDto dto,
+            CustomerPartRequestDto dto,
             string userId)
         {
             var customerId = await GetLoggedInCustomerIdAsync(userId);
@@ -119,11 +121,12 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 customerId.Value
             );
 
-            return "Unavailable part request submitted successfully.";
+            return "Part request submitted successfully. Please wait for staff approval.";
         }
 
+        // Submits review for customer's completed appointment.
         public async Task<string> SubmitReviewAsync(
-            CreateReviewDto dto,
+            CustomerReviewDto dto,
             string userId)
         {
             var customerId = await GetLoggedInCustomerIdAsync(userId);
@@ -175,6 +178,115 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             return "Review submitted successfully.";
         }
 
+        // Gets vehicles owned by the logged-in customer.
+        public async Task<List<CustomerVehicleListDto>> GetVehiclesAsync(string userId)
+        {
+            var customerId = await GetLoggedInCustomerIdAsync(userId);
+
+            if (customerId == null)
+                return new List<CustomerVehicleListDto>();
+
+            var vehicles = await _customerRepository
+                .GetCustomerVehiclesAsync(customerId.Value);
+
+            return vehicles.Select(v => new CustomerVehicleListDto
+            {
+                Vehicle_ID = v.Vehicle_ID,
+                Reg_Number = v.Reg_Number,
+                Make = v.Make,
+                Model = v.Model,
+                Vehicle_Type = v.Vehicle_Type
+            }).ToList();
+        }
+
+        // Gets all appointments of the logged-in customer.
+        public async Task<List<CustomerAppointmentListDto>> GetAppointmentsAsync(string userId)
+        {
+            var customerId = await GetLoggedInCustomerIdAsync(userId);
+
+            if (customerId == null)
+                return new List<CustomerAppointmentListDto>();
+
+            var appointments = await _customerRepository
+                .GetCustomerAppointmentsAsync(customerId.Value);
+
+            return appointments.Select(a => new CustomerAppointmentListDto
+            {
+                Appointment_ID = a.Appointment_ID,
+                Vehicle_ID = a.Vehicle_ID,
+                VehicleName = $"{a.Vehicle.Make} {a.Vehicle.Model} ({a.Vehicle.Reg_Number})",
+                Appointment_Date = a.Appointment_Date,
+                Service_Type = a.Service_Type,
+                Appointment_Status = a.Appointment_Status
+            }).ToList();
+        }
+
+        // Gets part requests created by the logged-in customer.
+        public async Task<List<CustomerPartRequestListDto>> GetPartRequestsAsync(string userId)
+        {
+            var customerId = await GetLoggedInCustomerIdAsync(userId);
+
+            if (customerId == null)
+                return new List<CustomerPartRequestListDto>();
+
+            var requests = await _customerRepository
+                .GetCustomerPartRequestsAsync(customerId.Value);
+
+            return requests.Select(r => new CustomerPartRequestListDto
+            {
+                Request_ID = r.Request_ID,
+                Requested_Part_Name = r.Requested_Part_Name,
+                Requested_Quantity = r.Requested_Quantity,
+                Status = r.Status,
+                Request_Date = r.Request_Date
+            }).ToList();
+        }
+
+        // Gets completed appointments used in review dropdown.
+        public async Task<List<CustomerAppointmentListDto>> GetCompletedAppointmentsAsync(string userId)
+        {
+            var customerId = await GetLoggedInCustomerIdAsync(userId);
+
+            if (customerId == null)
+                return new List<CustomerAppointmentListDto>();
+
+            var appointments = await _customerRepository
+                .GetCompletedCustomerAppointmentsAsync(customerId.Value);
+
+            return appointments.Select(a => new CustomerAppointmentListDto
+            {
+                Appointment_ID = a.Appointment_ID,
+                Vehicle_ID = a.Vehicle_ID,
+                VehicleName = $"{a.Vehicle.Make} {a.Vehicle.Model} ({a.Vehicle.Reg_Number})",
+                Appointment_Date = a.Appointment_Date,
+                Service_Type = a.Service_Type,
+                Appointment_Status = a.Appointment_Status
+            }).ToList();
+        }
+
+        // Gets reviews submitted by the logged-in customer.
+        public async Task<List<CustomerReviewListDto>> GetReviewsAsync(string userId)
+        {
+            var customerId = await GetLoggedInCustomerIdAsync(userId);
+
+            if (customerId == null)
+                return new List<CustomerReviewListDto>();
+
+            var reviews = await _customerRepository
+                .GetCustomerReviewsAsync(customerId.Value);
+
+            return reviews.Select(r => new CustomerReviewListDto
+            {
+                Review_ID = r.Review_ID,
+                Appointment_ID = r.Appointment_ID,
+                Service_Type = r.Appointment.Service_Type,
+                Rating = r.Rating,
+                Comment = r.Comment,
+                Review_Date = r.Review_Date
+            }).ToList();
+        }
+
+        // Converts logged-in Identity user ID into Customer_ID.
         private async Task<int?> GetLoggedInCustomerIdAsync(string userId)
         {
             if (string.IsNullOrWhiteSpace(userId))
