@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Data;
 using System.Security.Claims;
 using System.Text;
 using VehicleInventoryManagementSystem.Application.DTOs.Auth;
+using VehicleInventoryManagementSystem.Application.Interfaces;
 using VehicleInventoryManagementSystem.Application.Interfaces.IRepositories;
 using VehicleInventoryManagementSystem.Application.Interfaces.IServices;
 using VehicleInventoryManagementSystem.Domain.Models;
@@ -17,38 +17,36 @@ using VehicleInventoryManagementSystem.Infrastructure.Settings;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-//// 1. Database setup
+// Database setup
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Identity Configuration
+// Identity configuration
 builder.Services.AddIdentity<User, Role>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// Bind JwtSettings to the DI container
+// JWT settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 
-
-// 3. Register Services & Repositories
+// Core auth service
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Common repositories
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ISalesRepository, SalesRepository>();
 builder.Services.AddScoped<IVehiclePartRepository, VehiclePartRepository>();
 
-
-
+// Staff reports
 builder.Services.AddScoped<IStaffReportRepository, StaffReportRepository>();
 builder.Services.AddScoped<IStaffReportService, StaffReportService>();
 
+// SMTP and invoice email
 builder.Services.Configure<SmtpEmailSettings>(
     builder.Configuration.GetSection("SmtpEmailSettings"));
 
@@ -56,30 +54,42 @@ builder.Services.AddScoped<IInvoiceEmailRepository, InvoiceEmailRepository>();
 builder.Services.AddScoped<IInvoiceEmailService, InvoiceEmailService>();
 builder.Services.AddScoped<IEmailSenderService, SmtpEmailSenderService>();
 
-
-
-
+// Customer self-service
 builder.Services.AddScoped<ICustomerSelfRepository, CustomerSelfRepository>();
-builder.Services.AddScoped<ISalesRepository, SalesRepository>();
-
 builder.Services.AddScoped<ICustomerSelfService, CustomerSelfService>();
 
+// Admin parts management
 builder.Services.AddScoped<IAdminPartsRepository, AdminPartsRepository>();
 builder.Services.AddScoped<IAdminPartsService, AdminPartsService>();
 
-// Feature 2: Staff Registration (Vertical Slice)
+// Staff registration
 builder.Services.AddScoped<IStaffRegistrationRepository, StaffRegistrationRepository>();
 builder.Services.AddScoped<IStaffRegistrationService, StaffRegistrationService>();
 
-// Feature 6: Customer Registration (Vertical Slice)
+// Vendor management
+builder.Services.AddScoped<IVendorManagementRepository, VendorManagementRepository>();
+builder.Services.AddScoped<IVendorManagementService, VendorManagementService>();
+
+// Customer details and search
+builder.Services.AddScoped<ICustomerDetailsRepository, CustomerDetailsRepository>();
+builder.Services.AddScoped<ICustomerDetailsService, CustomerDetailsService>();
+
+builder.Services.AddScoped<ICustomerSearchRepository, CustomerSearchRepository>();
+builder.Services.AddScoped<ICustomerSearchService, CustomerSearchService>();
+
+// Customer registration
 builder.Services.AddScoped<ICustomerRegistrationRepository, CustomerRegistrationRepository>();
 builder.Services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
 
-// Features 7 & 16: Sales & POS (Vertical Slice)
+// Sales feature
 builder.Services.AddScoped<ISalesFeatureRepository, SalesFeatureRepository>();
 builder.Services.AddScoped<ISalesFeatureService, SalesFeatureService>();
 
-// 4. Configure Authentication & JWT
+// Alert services
+builder.Services.AddScoped<IAlertService, AlertService>();
+builder.Services.AddHostedService<AlertMonitorBackgroundService>();
+
+// Authentication and JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -95,27 +105,30 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings!.Issuer,
         ValidAudience = jwtSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings.SecretKey)
+        ),
         ClockSkew = TimeSpan.Zero,
         RoleClaimType = ClaimTypes.Role,
         NameClaimType = ClaimTypes.Name
     };
 });
 
+// CORS configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:1234") //  frontend URL
+        policy.WithOrigins("http://localhost:1234")
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials(); // Useful for auth tokens/cookies
+              .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure HTTP pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
