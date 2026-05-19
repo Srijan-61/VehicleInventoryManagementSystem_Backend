@@ -38,6 +38,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     if (part == null || part.Stock_Quantity < item.Quantity)
                         throw new Exception($"Part {item.Part_ID} is unavailable or out of stock.");
 
+                    // Backend mathematics: calculate total for this line item
                     decimal itemTotal = part.Unit_Price * item.Quantity;
                     subTotal += itemTotal;
 
@@ -51,8 +52,32 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     _salesFeatureRepository.UpdatePart(part);
                 }
 
-                // Feature 16: if the subtotal is over 5000, we give a 10% loyalty discount
-                decimal discount = subTotal > 5000 ? subTotal * 0.10m : 0;
+                // Calculate discount securely on the backend
+                decimal discount = 0;
+                if (dto.FlatDiscount.HasValue && dto.FlatDiscount.Value > 0)
+                {
+                    discount = dto.FlatDiscount.Value;
+                }
+                else if (dto.DiscountPercentage.HasValue && dto.DiscountPercentage.Value > 0)
+                {
+                    discount = subTotal * (dto.DiscountPercentage.Value / 100m);
+                }
+                else
+                {
+                    // Feature 16: if the subtotal is over 5000 and no explicit discount provided, we give a 10% loyalty discount
+                    discount = subTotal > 5000 ? subTotal * 0.10m : 0;
+                }
+
+                // Security guardrail: Ensure discount does not exceed subtotal (matches frontend logic)
+                if (discount > subTotal)
+                {
+                    discount = subTotal;
+                }
+                if (discount < 0)
+                {
+                    discount = 0;
+                }
+
                 decimal finalTotal = subTotal - discount;
 
                 var invoice = new SalesInvoice
@@ -74,6 +99,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 await _salesFeatureRepository.AddSalesItemsAsync(salesItems);
                 await _salesFeatureRepository.SaveChangesAsync();
 
+                // Commit the strict Database Transaction if all goes well
                 await transaction.CommitAsync();
 
                 // put together the response with all the invoice details
@@ -84,7 +110,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                     Discount_Amount = discount,
                     Final_Total = finalTotal,
                     Items = resultItems,
-                    Message = discount > 0 ? "10% Loyalty discount applied!" : "Invoice created successfully."
+                    Message = discount > 0 ? $"Discount of {discount:C} applied!" : "Invoice created successfully."
                 };
 
                 return (true, responseData, Enumerable.Empty<string>());
@@ -108,6 +134,20 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             });
         }
 
+        // Returns available parts with their names and stock for the dropdown on the sales form
+        public async Task<IEnumerable<PartDropdownDto>> GetPartsForDropdownAsync()
+        {
+            var parts = await _salesFeatureRepository.GetAvailablePartsAsync();
+
+            return parts.Select(p => new PartDropdownDto
+            {
+                Part_ID = p.Part_ID,
+                Part_Name = p.Part_Name,
+                Unit_Price = p.Unit_Price,
+                Stock_Quantity = p.Stock_Quantity
+            });
+        }
+
         // Finds the Staff_ID for the currently logged-in user so we can link the invoice to them
         public async Task<int> GetCurrentStaffIdAsync(string userId)
         {
@@ -115,6 +155,22 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             return staff?.Staff_ID ?? 0;
         }
 
+        // Returns recent sales invoices
+        public async Task<IEnumerable<RecentSalesInvoiceDto>> GetRecentInvoicesAsync(int count = 10)
+        {
+            var invoices = await _salesFeatureRepository.GetRecentInvoicesAsync(count);
 
+            return invoices.Select(i => new RecentSalesInvoiceDto
+            {
+                Invoice_No = i.Sales_Invoice_No,
+                Sales_Date = i.Sales_Date,
+                Customer_Name = i.Customer?.User?.FullName ?? "Unknown Customer",
+                Staff_Name = i.Staff?.User?.FullName ?? "Unknown Staff",
+                Final_Total = i.Final_Total,
+                Sub_Total = i.Sub_Total,
+                Discount_Amount = i.Discount_Amount,
+                Is_Paid = i.Is_Paid
+            });
+        }
     }
 }

@@ -43,6 +43,14 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             return await _context.Admins.AnyAsync(a => a.Admin_ID == adminId);
         }
 
+        public async Task<int?> GetAdminIdByUserIdAsync(string userId)
+        {
+            var admin = await _context.Admins
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.User_Id == userId);
+
+            return admin?.Admin_ID;
+        }
         public async Task AddPurchaseInvoiceAsync(PurchaseInvoice invoice)
         {
             await _context.PurchaseInvoices.AddAsync(invoice);

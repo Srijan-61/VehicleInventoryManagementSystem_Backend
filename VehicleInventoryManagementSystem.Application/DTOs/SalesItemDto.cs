@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -19,5 +19,13 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
     {
         public int Customer_ID { get; set; }
         public string FullName { get; set; } = string.Empty;
+    }
+
+    public class PartDropdownDto
+    {
+        public int Part_ID { get; set; }
+        public string Part_Name { get; set; } = string.Empty;
+        public decimal Unit_Price { get; set; }
+        public int Stock_Quantity { get; set; }
     }
 }

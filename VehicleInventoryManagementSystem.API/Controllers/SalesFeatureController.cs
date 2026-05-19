@@ -28,6 +28,14 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             return Ok(customers);
         }
 
+        // Returns the list of available parts so the frontend can show them in a dropdown
+        [HttpGet("parts")]
+        public async Task<IActionResult> GetPartsDropdown()
+        {
+            var parts = await _salesFeatureService.GetPartsForDropdownAsync();
+            return Ok(parts);
+        }
+
         // This is the main endpoint for creating a new sales invoice
         [HttpPost("create-sales-invoice")]
         public async Task<IActionResult> CreateSalesInvoice([FromBody] CreateSalesInvoiceDto dto)
@@ -49,6 +57,14 @@ namespace VehicleInventoryManagementSystem.API.Controllers
                 return Ok(data);
 
             return BadRequest(new { Message = "Transaction failed.", Errors = errors });
+        }
+
+        // Returns recent sales invoices
+        [HttpGet("recent-invoices")]
+        public async Task<IActionResult> GetRecentInvoices([FromQuery] int count = 10)
+        {
+            var invoices = await _salesFeatureService.GetRecentInvoicesAsync(count);
+            return Ok(invoices);
         }
     }
 }

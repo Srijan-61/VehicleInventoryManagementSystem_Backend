@@ -14,28 +14,33 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             _context = context;
         }
 
-        // Gets a vehicle that belongs to the selected customer.
+        public async Task<int?> GetCustomerIdByUserIdAsync(string userId)
+        {
+            var customer = await _context.Customers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.User_Id == userId);
+
+            return customer?.Customer_ID;
+        }
+
         public async Task<Vehicle?> GetCustomerVehicleAsync(int customerId, int vehicleId)
         {
             return await _context.Vehicles
-                .FirstOrDefaultAsync(v => v.Customer_ID == customerId && v.Vehicle_ID == vehicleId);
+                .FirstOrDefaultAsync(v =>
+                    v.Customer_ID == customerId &&
+                    v.Vehicle_ID == vehicleId);
         }
 
-        // Checks whether the customer exists before creating a request.
-        public async Task<bool> CustomerExistsAsync(int customerId)
+        public async Task<bool> AppointmentSlotExistsAsync(DateTime appointmentDate)
         {
-            return await _context.Customers.AnyAsync(c => c.Customer_ID == customerId);
+            return await _context.Appointments.AnyAsync(a =>
+                a.Appointment_Date == appointmentDate &&
+                a.Appointment_Status != "Cancelled");
         }
 
-        // Finds a part by name to avoid requesting available parts.
-        public async Task<VehiclePart?> GetPartByNameAsync(string partName)
-        {
-            return await _context.VehicleParts
-                .FirstOrDefaultAsync(p => p.Part_Name.ToLower() == partName.ToLower());
-        }
-
-        // Gets appointment only if it belongs to the customer.
-        public async Task<Appointment?> GetCustomerAppointmentAsync(int customerId, int appointmentId)
+        public async Task<Appointment?> GetCustomerAppointmentAsync(
+            int customerId,
+            int appointmentId)
         {
             return await _context.Appointments
                 .Include(a => a.Vehicle)
@@ -44,10 +49,32 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
                     a.Vehicle.Customer_ID == customerId);
         }
 
-        // Prevents duplicate review for the same appointment.
+        public async Task<VehiclePart?> GetPartByNameAsync(string partName)
+        {
+            var normalizedPartName = partName.Trim().ToLower();
+
+            return await _context.VehicleParts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p =>
+                    p.Part_Name.ToLower() == normalizedPartName);
+        }
+
+        public async Task<bool> ActivePartRequestExistsAsync(
+            int customerId,
+            string partName)
+        {
+            var normalizedPartName = partName.Trim().ToLower();
+
+            return await _context.PartRequests.AnyAsync(r =>
+                r.Customer_ID == customerId &&
+                r.Requested_Part_Name.ToLower() == normalizedPartName &&
+                r.Status == "Pending");
+        }
+
         public async Task<bool> ReviewExistsForAppointmentAsync(int appointmentId)
         {
-            return await _context.Reviews.AnyAsync(r => r.Appointment_ID == appointmentId);
+            return await _context.Reviews
+                .AnyAsync(r => r.Appointment_ID == appointmentId);
         }
 
         public async Task AddAppointmentAsync(Appointment appointment)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -15,8 +15,6 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
         [Required]
         public string PhoneNumber { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        [Required]
-        public string Password { get; set; } = string.Empty;
 
         // Vehicle Details
         [Required]

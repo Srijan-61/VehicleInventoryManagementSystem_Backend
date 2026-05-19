@@ -47,6 +47,26 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             return await _context.Customers.Include(c => c.User).ToListAsync();
         }
 
+        public async Task<IEnumerable<VehiclePart>> GetAvailablePartsAsync()
+        {
+            return await _context.VehicleParts
+                .Where(p => p.IsAvailable && p.Stock_Quantity > 0)
+                .OrderBy(p => p.Part_Name)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<SalesInvoice>> GetRecentInvoicesAsync(int count)
+        {
+            return await _context.SalesInvoices
+                .Include(i => i.Customer)
+                    .ThenInclude(c => c.User)
+                .Include(i => i.Staff)
+                    .ThenInclude(s => s.User)
+                .OrderByDescending(i => i.Created_At)
+                .Take(count)
+                .ToListAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

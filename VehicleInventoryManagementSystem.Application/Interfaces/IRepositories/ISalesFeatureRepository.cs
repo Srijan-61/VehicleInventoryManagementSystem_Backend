@@ -13,6 +13,8 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
         Task AddSalesItemsAsync(IEnumerable<SalesItem> items);
         Task<Staff?> GetStaffByUserIdAsync(string userId);
         Task<IEnumerable<Customer>> GetCustomersWithUsersAsync();
+        Task<IEnumerable<VehiclePart>> GetAvailablePartsAsync();
+        Task<IEnumerable<SalesInvoice>> GetRecentInvoicesAsync(int count);
         Task SaveChangesAsync();
     }
 }
