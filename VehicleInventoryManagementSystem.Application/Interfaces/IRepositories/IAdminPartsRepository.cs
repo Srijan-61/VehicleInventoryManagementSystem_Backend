@@ -7,7 +7,7 @@ namespace VehicleInventoryManagementSystem.Application.Interfaces.IRepositories
         Task<List<VehiclePart>> GetAllPartsAsync();
         Task<VehiclePart?> GetPartByIdAsync(int partId);
         Task<bool> VendorExistsAsync(int vendorId);
-        Task<bool> AdminExistsAsync(int adminId);
+        Task<int?> GetAdminIdByUserIdAsync(string userId);
 
         Task AddPurchaseInvoiceAsync(PurchaseInvoice invoice);
         Task AddPurchaseItemAsync(PurchaseItem item);
