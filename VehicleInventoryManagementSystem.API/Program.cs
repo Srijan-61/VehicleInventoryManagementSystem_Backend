@@ -125,6 +125,9 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Global Exception Handler - catches any unhandled exception and returns a standardized JSON error response
+app.UseMiddleware<VehicleInventoryManagementSystem.API.Middlewares.GlobalExceptionMiddleware>();
+
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
