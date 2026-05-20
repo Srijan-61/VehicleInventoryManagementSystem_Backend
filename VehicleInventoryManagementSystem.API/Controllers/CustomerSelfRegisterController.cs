@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -67,6 +67,15 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             };
 
             _context.Customers.Add(customer);
+
+            // Assign "Customer" role in database (role ID is "3" as seeded in AppDbContext)
+            var userRole = new Microsoft.AspNetCore.Identity.IdentityUserRole<string>
+            {
+                UserId = user.Id,
+                RoleId = "3"
+            };
+            _context.UserRoles.Add(userRole);
+
             await _context.SaveChangesAsync();
 
             // Add vehicles if provided
@@ -300,6 +309,7 @@ namespace VehicleInventoryManagementSystem.API.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
                 new Claim(ClaimTypes.Name, user.FullName ?? string.Empty),
+                new Claim(ClaimTypes.Role, "Customer"),
                 new Claim("CustomerId", customerId.ToString())
             };
 
