@@ -23,8 +23,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
 
         // Main method for generating a new sales invoice. 
         // This handles stock validation, total calculation, and applies the flat discount.
-        public async Task<(bool Succeeded, SalesInvoiceResultDto? Data, IEnumerable<string> Errors)>
-            CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto)
+        public async Task<(bool Succeeded, SalesInvoiceResultDto? Data, IEnumerable<string> Errors)> CreateSalesInvoiceAsync(CreateSalesInvoiceDto dto)
         {
             // First, make sure the incoming payload is valid before we do any heavy lifting
             var validationErrors = ValidateCreateInvoiceDto(dto);
@@ -185,7 +184,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             });
         }
 
-        // Grabs available parts to display in the POS screen
+        // Grabs available parts to display in the screen
         public async Task<IEnumerable<PartDropdownDto>> GetPartsForDropdownAsync()
         {
             var parts = await _salesFeatureRepository.GetAvailablePartsAsync();
