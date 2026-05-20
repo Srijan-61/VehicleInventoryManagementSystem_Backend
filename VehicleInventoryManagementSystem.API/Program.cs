@@ -89,6 +89,10 @@ builder.Services.AddScoped<ISalesFeatureService, SalesFeatureService>();
 builder.Services.AddScoped<IAlertService, AlertService>();
 builder.Services.AddHostedService<AlertMonitorBackgroundService>();
 
+// Staff approval for customer appointments and part requests
+builder.Services.AddScoped<IStaffApprovalRepository, StaffApprovalRepository>();
+builder.Services.AddScoped<IStaffApprovalService, StaffApprovalService>();
+
 // Authentication and JWT
 builder.Services.AddAuthentication(options =>
 {

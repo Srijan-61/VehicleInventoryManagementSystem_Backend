@@ -2,7 +2,7 @@
 
 namespace VehicleInventoryManagementSystem.Application.DTOs
 {
-    public class CreateReviewDto
+    public class CustomerReviewDto
     {
         [Required]
         public int Appointment_ID { get; set; }

@@ -18,7 +18,6 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             _context = context;
         }
 
-        // Returns customers who purchase frequently.
         public async Task<List<RegularCustomerReportDto>> GetRegularCustomersAsync(
             int minimumPurchases,
             int limit,
@@ -32,9 +31,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             );
 
             return await query
-                .Where(invoice =>
-                    invoice.Customer != null &&
-                    invoice.Customer.User != null)
+                .Where(invoice => invoice.Customer != null && invoice.Customer.User != null)
                 .GroupBy(invoice => new
                 {
                     invoice.Customer_ID,
@@ -59,7 +56,6 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        // Returns top spending customers.
         public async Task<List<HighSpenderReportDto>> GetHighSpendersAsync(
             int limit,
             decimal? minimumSpent,
@@ -73,9 +69,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             );
 
             var reportQuery = query
-                .Where(invoice =>
-                    invoice.Customer != null &&
-                    invoice.Customer.User != null)
+                .Where(invoice => invoice.Customer != null && invoice.Customer.User != null)
                 .GroupBy(invoice => new
                 {
                     invoice.Customer_ID,
@@ -106,11 +100,10 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        // Returns unpaid invoices. Can optionally show overdue records only.
         public async Task<List<PendingCreditReportDto>> GetPendingCreditsAsync(
             bool overdueOnly)
         {
-            var today = DateTime.UtcNow.Date;
+            var todayUtc = DateTime.UtcNow.Date;
 
             var query = _context.SalesInvoices
                 .AsNoTracking()
@@ -123,7 +116,7 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
             {
                 query = query.Where(invoice =>
                     invoice.Credit_Due_Date.HasValue &&
-                    invoice.Credit_Due_Date.Value.Date < today);
+                    invoice.Credit_Due_Date.Value < todayUtc);
             }
 
             return await query
@@ -138,12 +131,15 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
                     PendingAmount = invoice.Final_Total,
                     Credit_Due_Date = invoice.Credit_Due_Date,
                     IsOverdue = invoice.Credit_Due_Date.HasValue &&
-                                invoice.Credit_Due_Date.Value.Date < today
+                                invoice.Credit_Due_Date.Value < todayUtc
                 })
                 .ToListAsync();
         }
 
-        // Applies optional sales date filter to report queries.
+        /// <summary>
+        /// Applies optional date range safely for PostgreSQL.
+        /// Avoids .Date inside LINQ query and normalizes date values to UTC.
+        /// </summary>
         private static IQueryable<SalesInvoice> ApplyDateFilter(
             IQueryable<SalesInvoice> query,
             DateTime? startDate,
@@ -151,14 +147,22 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
         {
             if (startDate.HasValue)
             {
-                query = query.Where(invoice =>
-                    invoice.Sales_Date.Date >= startDate.Value.Date);
+                var startUtc = DateTime.SpecifyKind(
+                    startDate.Value.Date,
+                    DateTimeKind.Utc
+                );
+
+                query = query.Where(invoice => invoice.Sales_Date >= startUtc);
             }
 
             if (endDate.HasValue)
             {
-                query = query.Where(invoice =>
-                    invoice.Sales_Date.Date <= endDate.Value.Date);
+                var endUtcExclusive = DateTime.SpecifyKind(
+                    endDate.Value.Date.AddDays(1),
+                    DateTimeKind.Utc
+                );
+
+                query = query.Where(invoice => invoice.Sales_Date < endUtcExclusive);
             }
 
             return query;
