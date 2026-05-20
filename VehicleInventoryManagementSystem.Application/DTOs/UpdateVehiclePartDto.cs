@@ -18,18 +18,13 @@ namespace VehicleInventoryManagementSystem.Application.DTOs
 
         [Required]
         [Range(0, int.MaxValue)]
-        public int Stock_Quantity { get; set; }
-
-        [Required]
-        [Range(0, int.MaxValue)]
         public int Minimum_Stock_Level { get; set; }
 
         [Required]
-        [Range(1, double.MaxValue)]
+        [Range(0.01, double.MaxValue)]
         public decimal Unit_Price { get; set; }
 
         [Required]
-        [Range(1, double.MaxValue)]
-        public decimal Purchase_Price { get; set; }
+        public bool IsAvailable { get; set; }
     }
 }
