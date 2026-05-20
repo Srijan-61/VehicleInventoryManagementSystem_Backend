@@ -36,11 +36,11 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
 
             try
             {
-                // Verify the customer actually exists
-                var customerExists = await _context.Customers
-                    .AnyAsync(c => c.Customer_ID == dto.Customer_ID);
+                // Verify the customer actually exists and load it to update stats
+                var customer = await _context.Customers
+                    .FirstOrDefaultAsync(c => c.Customer_ID == dto.Customer_ID);
 
-                if (!customerExists)
+                if (customer == null)
                     return (false, null, new[] { "Customer not found." });
 
                 // Verify the staff profile exists
@@ -100,12 +100,11 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                         Total_Price = itemTotal
                     });
 
-                    // Deduct from inventory and update part availability status
+                    // Deduct from inventory and update part availability status.
+                    // EF Core automatically tracks these changes, so calling UpdatePart is not required and causes errors.
                     part.Stock_Quantity -= item.Quantity;
                     part.IsAvailable = part.Stock_Quantity > 0;
                     part.Updated_At = DateTime.UtcNow;
-
-                    _salesFeatureRepository.UpdatePart(part);
                 }
 
                 if (!salesItems.Any())
@@ -114,6 +113,14 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
                 // Apply a flat 10% discount if they spend 5000 or more
                 var discount = subTotal >= 5000 ? subTotal * 0.10m : 0;
                 var finalTotal = subTotal - discount;
+
+                // Update customer spending and credit records
+                customer.Total_Spent += finalTotal;
+                if (!dto.Is_Paid)
+                {
+                    customer.Pending_Credit += finalTotal;
+                    customer.Credit_Due_Date = DateTime.UtcNow.AddDays(30);
+                }
 
                 // Build the final invoice record
                 var invoice = new SalesInvoice
