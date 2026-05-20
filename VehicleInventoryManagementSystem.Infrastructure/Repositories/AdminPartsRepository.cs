@@ -83,5 +83,19 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        // Checks whether a part with the same name AND brand already exists.
+        public async Task<bool> PartExistsAsync(string partName, string brand)
+        {
+            return await _context.VehicleParts.AnyAsync(p =>
+                p.Part_Name.ToLower() == partName.ToLower() &&
+                p.Brand.ToLower() == brand.ToLower());
+        }
+
+        // Inserts a new VehiclePart row. Caller must call SaveChangesAsync to get the generated Part_ID.
+        public async Task AddPartAsync(VehiclePart part)
+        {
+            await _context.VehicleParts.AddAsync(part);
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace VehicleInventoryManagementSystem.Application.DTOs
 {
-    public class CreatePartRequestDto
+    public class CustomerPartRequestDto
     {
         [Required]
         [StringLength(100)]

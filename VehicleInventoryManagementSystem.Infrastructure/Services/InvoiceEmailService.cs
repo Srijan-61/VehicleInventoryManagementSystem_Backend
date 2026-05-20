@@ -113,18 +113,32 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             foreach (var item in invoice.Items)
             {
                 itemsHtml.Append($@"
-                                    <tr style='border-bottom: 1px solid #eeeeee;'>
-                                        <td style='padding: 12px; text-align: left; color: #333333;'>{WebUtility.HtmlEncode(item.PartName)}</td>
-                                        <td style='padding: 12px; text-align: left; color: #666666;'>{WebUtility.HtmlEncode(item.Brand)}</td>
-                                        <td style='padding: 12px; text-align: center; color: #333333;'>{item.Quantity_Sold}</td>
-                                        <td style='padding: 12px; text-align: right; color: #333333;'>${item.Unit_Price:N2}</td>
-                                        <td style='padding: 12px; text-align: right; font-weight: bold; color: #111111;'>${item.Total_Price:N2}</td>
-                                    </tr>");
+                    <tr style='border-bottom: 1px solid #eeeeee;'>
+                        <td style='padding: 12px; text-align: left; color: #333333;'>
+                            {WebUtility.HtmlEncode(item.PartName)}
+                        </td>
+
+                        <td style='padding: 12px; text-align: left; color: #666666;'>
+                            {WebUtility.HtmlEncode(item.Brand)}
+                        </td>
+
+                        <td style='padding: 12px; text-align: center; color: #333333;'>
+                            {item.Quantity_Sold}
+                        </td>
+
+                        <td style='padding: 12px; text-align: right; color: #333333;'>
+                            Rs. {item.Unit_Price:N2}
+                        </td>
+
+                        <td style='padding: 12px; text-align: right; font-weight: bold; color: #111111;'>
+                            Rs. {item.Total_Price:N2}
+                        </td>
+                    </tr>");
             }
 
-            var paymentStatus = invoice.Is_Paid ? 
-                "<span style='background-color: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;'>PAID</span>" : 
-                "<span style='background-color: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;'>PENDING CREDIT</span>";
+            var paymentStatus = invoice.Is_Paid
+                ? "<span style='background-color: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;'>PAID</span>"
+                : "<span style='background-color: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block;'>PENDING CREDIT</span>";
 
             var dateStr = invoice.Sales_Date.ToString("MMM dd, yyyy");
 
@@ -136,100 +150,263 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Invoice #{invoice.Sales_Invoice_No}</title>
 </head>
-<body style='margin: 0; padding: 0; font-family: ""Segoe UI"", Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333333; line-height: 1.6;'>
-    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7f6; padding: 40px 20px;'>
+
+<body style='margin: 0; padding: 0; font-family: Segoe UI, sans-serif; background-color: #f4f7f6;'>
+
+    <table width='100%' cellpadding='0' cellspacing='0' style='padding: 40px 20px;'>
         <tr>
             <td align='center'>
-                <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto;'>
-                    
-                    <!-- Header -->
+
+                <table
+                    width='100%'
+                    cellpadding='0'
+                    cellspacing='0'
+                    style='
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        max-width: 700px;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                    '>
+
+                    <!-- HEADER -->
                     <tr>
-                        <td style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 30px 40px; text-align: center;'>
-                            <h1 style='color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 1px;'>SALES INVOICE</h1>
-                            <p style='color: #a8c1f0; margin: 5px 0 0 0; font-size: 14px;'>Vehicle Inventory Management System</p>
+                        <td
+                            style='
+                                background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                                padding: 30px;
+                                text-align: center;
+                            '>
+
+                            <h1 style='color: white; margin: 0;'>
+                                SALES INVOICE
+                            </h1>
+
+                            <p style='color: #d6e4ff; margin-top: 10px;'>
+                                Vehicle Inventory Management System
+                            </p>
+
                         </td>
                     </tr>
 
-                    <!-- Customer & Invoice Details -->
+                    <!-- CUSTOMER + INVOICE -->
                     <tr>
-                        <td style='padding: 30px 40px;'>
-                            <table width='100%' cellpadding='0' cellspacing='0'>
+                        <td style='padding: 30px;'>
+
+                            <table width='100%'>
+
                                 <tr>
+
                                     <td width='50%' valign='top'>
-                                        <p style='margin: 0 0 5px 0; font-size: 12px; color: #888888; text-transform: uppercase; font-weight: bold;'>Billed To:</p>
-                                        <p style='margin: 0; font-size: 16px; font-weight: bold; color: #222222;'>{WebUtility.HtmlEncode(invoice.CustomerName)}</p>
+
+                                        <p
+                                            style='
+                                                font-size: 12px;
+                                                color: #888;
+                                                margin: 0;
+                                            '>
+                                            BILLED TO
+                                        </p>
+
+                                        <h3 style='margin-top: 8px;'>
+                                            {WebUtility.HtmlEncode(invoice.CustomerName)}
+                                        </h3>
+
+                                        <p>{WebUtility.HtmlEncode(invoice.CustomerEmail)}</p>
+
+                                        <p>{WebUtility.HtmlEncode(invoice.CustomerPhone)}</p>
+
                                     </td>
+
                                     <td width='50%' valign='top' align='right'>
-                                        <p style='margin: 0 0 5px 0; font-size: 12px; color: #888888; text-transform: uppercase; font-weight: bold;'>Invoice Details:</p>
-                                        <p style='margin: 0 0 3px 0; font-size: 14px;'><strong>No:</strong> #{invoice.Sales_Invoice_No}</p>
-                                        <p style='margin: 0 0 3px 0; font-size: 14px;'><strong>Date:</strong> {dateStr}</p>
-                                        <p style='margin: 0; font-size: 14px;'><strong>Status:</strong> {paymentStatus}</p>
+
+                                        <p>
+                                            <strong>Invoice:</strong>
+                                            #{invoice.Sales_Invoice_No}
+                                        </p>
+
+                                        <p>
+                                            <strong>Date:</strong>
+                                            {dateStr}
+                                        </p>
+
+                                        <p>
+                                            <strong>Status:</strong>
+                                            {paymentStatus}
+                                        </p>
+
                                     </td>
+
                                 </tr>
+
                             </table>
+
                         </td>
                     </tr>
 
-                    <!-- Items Table -->
+                    <!-- ITEMS -->
                     <tr>
-                        <td style='padding: 0 40px 20px 40px;'>
-                            <table width='100%' cellpadding='0' cellspacing='0' style='border-collapse: collapse;'>
+                        <td style='padding: 0 30px 30px 30px;'>
+
+                            <table
+                                width='100%'
+                                cellpadding='0'
+                                cellspacing='0'
+                                style='border-collapse: collapse;'>
+
                                 <thead>
-                                    <tr style='background-color: #f8f9fa; border-bottom: 2px solid #e9ecef;'>
-                                        <th style='padding: 12px; text-align: left; font-size: 13px; color: #666666; text-transform: uppercase;'>Part</th>
-                                        <th style='padding: 12px; text-align: left; font-size: 13px; color: #666666; text-transform: uppercase;'>Brand</th>
-                                        <th style='padding: 12px; text-align: center; font-size: 13px; color: #666666; text-transform: uppercase;'>Qty</th>
-                                        <th style='padding: 12px; text-align: right; font-size: 13px; color: #666666; text-transform: uppercase;'>Price</th>
-                                        <th style='padding: 12px; text-align: right; font-size: 13px; color: #666666; text-transform: uppercase;'>Total</th>
+
+                                    <tr style='background-color: #f8f9fa;'>
+
+                                        <th style='padding: 12px; text-align: left;'>
+                                            PART
+                                        </th>
+
+                                        <th style='padding: 12px; text-align: left;'>
+                                            BRAND
+                                        </th>
+
+                                        <th style='padding: 12px; text-align: center;'>
+                                            QTY
+                                        </th>
+
+                                        <th style='padding: 12px; text-align: right;'>
+                                            PRICE
+                                        </th>
+
+                                        <th style='padding: 12px; text-align: right;'>
+                                            TOTAL
+                                        </th>
+
                                     </tr>
+
                                 </thead>
+
                                 <tbody>
-{itemsHtml}
+                                    {itemsHtml}
                                 </tbody>
+
                             </table>
+
                         </td>
                     </tr>
 
-                    <!-- Summary Totals -->
+                    <!-- TOTALS -->
                     <tr>
-                        <td style='padding: 0 40px 30px 40px;'>
-                            <table width='100%' cellpadding='0' cellspacing='0'>
+                        <td style='padding: 0 30px 30px 30px;'>
+
+                            <table width='100%'>
+
                                 <tr>
-                                    <td width='50%' valign='top'>
-                                        <p style='margin: 0; font-size: 13px; color: #888888;'>Processed by: {WebUtility.HtmlEncode(invoice.StaffName)}</p>
+
+                                    <td width='50%'>
+
+                                        <p style='color: #777;'>
+                                            Processed by:
+                                            {WebUtility.HtmlEncode(invoice.StaffName)}
+                                        </p>
+
                                     </td>
-                                    <td width='50%' valign='top'>
-                                        <table width='100%' cellpadding='0' cellspacing='0' style='border-collapse: collapse;'>
+
+                                    <td width='50%'>
+
+                                        <table width='100%'>
+
                                             <tr>
-                                                <td style='padding: 8px 12px; text-align: right; color: #666666; font-size: 14px;'>Sub Total:</td>
-                                                <td style='padding: 8px 12px; text-align: right; font-weight: bold; font-size: 14px;'>${invoice.Sub_Total:N2}</td>
+                                                <td align='right'>
+                                                    Sub Total:
+                                                </td>
+
+                                                <td align='right'>
+                                                    <strong>
+                                                        Rs. {invoice.Sub_Total:N2}
+                                                    </strong>
+                                                </td>
                                             </tr>
+
                                             <tr>
-                                                <td style='padding: 8px 12px; text-align: right; color: #e53e3e; font-size: 14px;'>Discount:</td>
-                                                <td style='padding: 8px 12px; text-align: right; font-weight: bold; color: #e53e3e; font-size: 14px;'>-${invoice.Discount_Amount:N2}</td>
+                                                <td align='right' style='color:red;'>
+                                                    Discount:
+                                                </td>
+
+                                                <td align='right' style='color:red;'>
+                                                    -Rs. {invoice.Discount_Amount:N2}
+                                                </td>
                                             </tr>
-                                            <tr style='border-top: 2px solid #e9ecef;'>
-                                                <td style='padding: 15px 12px 8px 12px; text-align: right; color: #111111; font-size: 18px; font-weight: bold;'>Final Total:</td>
-                                                <td style='padding: 15px 12px 8px 12px; text-align: right; color: #1e3c72; font-size: 18px; font-weight: bold;'>${invoice.Final_Total:N2}</td>
+
+                                            <tr>
+
+                                                <td
+                                                    align='right'
+                                                    style='
+                                                        padding-top: 10px;
+                                                        font-size: 18px;
+                                                        font-weight: bold;
+                                                    '>
+
+                                                    Final Total:
+
+                                                </td>
+
+                                                <td
+                                                    align='right'
+                                                    style='
+                                                        padding-top: 10px;
+                                                        font-size: 18px;
+                                                        font-weight: bold;
+                                                        color:#1e3c72;
+                                                    '>
+
+                                                    Rs. {invoice.Final_Total:N2}
+
+                                                </td>
+
                                             </tr>
+
                                         </table>
+
                                     </td>
+
                                 </tr>
+
                             </table>
+
                         </td>
                     </tr>
 
-                    <!-- Footer -->
+                    <!-- FOOTER -->
                     <tr>
-                        <td style='background-color: #f8f9fa; padding: 20px 40px; text-align: center; border-top: 1px solid #e9ecef;'>
-                            <p style='margin: 0 0 10px 0; font-size: 14px; color: #555555; font-weight: bold;'>Thank you for your business!</p>
-                            <p style='margin: 0; font-size: 12px; color: #888888;'>If you have any questions regarding this invoice, please contact our support team.</p>
+                        <td
+                            style='
+                                background-color: #f8f9fa;
+                                padding: 20px;
+                                text-align: center;
+                            '>
+
+                            <p style='margin: 0; font-weight: bold;'>
+                                Thank you for your business!
+                            </p>
+
+                            <p
+                                style='
+                                    margin-top: 8px;
+                                    color: #888;
+                                    font-size: 12px;
+                                '>
+
+                                Please contact support for any invoice-related questions.
+
+                            </p>
+
                         </td>
                     </tr>
+
                 </table>
+
             </td>
         </tr>
     </table>
+
 </body>
 </html>";
         }

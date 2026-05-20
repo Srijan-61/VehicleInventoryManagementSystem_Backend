@@ -171,7 +171,101 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             }
         }
 
-        // Updates part details like name, price, and stock.
+        // Creates a brand-new inventory part record and immediately records its first purchase.
+        // Runs inside a transaction so both the part and invoice are saved together or not at all.
+        public async Task<object> CreateNewPartAndPurchaseAsync(CreateNewPartPurchaseDto dto, string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+                return new { success = false, message = "Invalid admin token." };
+
+            var vendorExists = await _adminPartsRepository.VendorExistsAsync(dto.Vendor_ID);
+            if (!vendorExists)
+                return new { success = false, message = "Vendor not found." };
+
+            // Duplicate guard — prevents two entries with the same name + brand.
+            var duplicate = await _adminPartsRepository.PartExistsAsync(dto.Part_Name.Trim(), dto.Brand.Trim());
+            if (duplicate)
+                return new
+                {
+                    success = false,
+                    message = $"A part named \"{dto.Part_Name}\" by \"{dto.Brand}\" already exists. Use \"Existing Part\" purchase instead."
+                };
+
+            var adminId = await _adminPartsRepository.GetAdminIdByUserIdAsync(userId);
+            if (adminId == null)
+                return new { success = false, message = "Admin profile not found." };
+
+            await _adminPartsRepository.BeginTransactionAsync();
+            try
+            {
+                // 1. Create the new VehiclePart row.
+                var newPart = new VehiclePart
+                {
+                    Part_Name          = dto.Part_Name.Trim(),
+                    Brand              = dto.Brand.Trim(),
+                    Part_Category      = dto.Part_Category.Trim(),
+                    Unit_Price         = dto.Selling_Price,
+                    Purchase_Price     = dto.Purchase_Unit_Cost,
+                    Stock_Quantity     = dto.Quantity_Purchased,
+                    Minimum_Stock_Level = 5,
+                    IsAvailable        = true,
+                    Created_At         = DateTime.UtcNow,
+                    Updated_At         = DateTime.UtcNow,
+                };
+                await _adminPartsRepository.AddPartAsync(newPart);
+                await _adminPartsRepository.SaveChangesAsync(); // flush to get the generated Part_ID
+
+                // 2. Create the purchase invoice.
+                var lineTotal = dto.Quantity_Purchased * dto.Purchase_Unit_Cost;
+                var invoice = new PurchaseInvoice
+                {
+                    Vendor_ID      = dto.Vendor_ID,
+                    Admin_ID       = adminId.Value,
+                    Purchase_Date  = DateTime.UtcNow,
+                    Total_Cost     = lineTotal,
+                    Payment_Status = dto.Payment_Status.Trim(),
+                    Created_At     = DateTime.UtcNow,
+                };
+                await _adminPartsRepository.AddPurchaseInvoiceAsync(invoice);
+                await _adminPartsRepository.SaveChangesAsync(); // flush to get Purchase_Invoice_No
+
+                // 3. Link the purchase item to the invoice and the new part.
+                var purchaseItem = new PurchaseItem
+                {
+                    Purchase_Invoice_No = invoice.Purchase_Invoice_No,
+                    Part_ID             = newPart.Part_ID,
+                    Quantity_Purchased  = dto.Quantity_Purchased,
+                    Purchase_Unit_Cost  = dto.Purchase_Unit_Cost,
+                    Line_Total          = lineTotal,
+                };
+                await _adminPartsRepository.AddPurchaseItemAsync(purchaseItem);
+                await _adminPartsRepository.SaveChangesAsync();
+
+                await _adminPartsRepository.CommitTransactionAsync();
+
+                _logger.LogInformation(
+                    "New part '{PartName}' (ID {PartId}) created and purchase invoice {InvoiceNo} recorded by admin {AdminId}.",
+                    newPart.Part_Name, newPart.Part_ID, invoice.Purchase_Invoice_No, adminId.Value);
+
+                return new
+                {
+                    success   = true,
+                    message   = $"New part \"{newPart.Part_Name}\" added to inventory and purchase recorded successfully.",
+                    partId    = newPart.Part_ID,
+                    invoiceNo = invoice.Purchase_Invoice_No,
+                    totalCost = invoice.Total_Cost,
+                };
+            }
+            catch (Exception ex)
+            {
+                await _adminPartsRepository.RollbackTransactionAsync();
+                _logger.LogError(ex, "Error while creating new part and purchase.");
+                return new { success = false, message = "An error occurred while saving the new part." };
+            }
+        }
+
+        // Updates editable part details — stock quantity is intentionally excluded
+        // so that stock can only change via purchase invoices, keeping records consistent.
         public async Task<string> UpdatePartAsync(int partId, UpdateVehiclePartDto dto)
         {
             var part = await _adminPartsRepository.GetPartByIdAsync(partId);
@@ -179,16 +273,13 @@ namespace VehicleInventoryManagementSystem.Infrastructure.Services
             if (part == null)
                 return "Part not found.";
 
-            // Updates all editable fields.
-            part.Part_Name = dto.Part_Name.Trim();
-            part.Part_Category = dto.Part_Category.Trim();
-            part.Brand = dto.Brand.Trim();
-            part.Stock_Quantity = dto.Stock_Quantity;
+            part.Part_Name           = dto.Part_Name.Trim();
+            part.Part_Category       = dto.Part_Category.Trim();
+            part.Brand               = dto.Brand.Trim();
             part.Minimum_Stock_Level = dto.Minimum_Stock_Level;
-            part.Unit_Price = dto.Unit_Price;
-            part.Purchase_Price = dto.Purchase_Price;
-            part.IsAvailable = dto.Stock_Quantity > 0;
-            part.Updated_At = DateTime.UtcNow;
+            part.Unit_Price          = dto.Unit_Price;
+            part.IsAvailable         = dto.IsAvailable;
+            part.Updated_At          = DateTime.UtcNow;
 
             await _adminPartsRepository.SaveChangesAsync();
 

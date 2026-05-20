@@ -22,9 +22,10 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             _logger = logger;
         }
 
+        // Books an appointment for the logged-in customer.
         [HttpPost("appointments")]
         public async Task<IActionResult> BookAppointment(
-            [FromBody] CreateAppointmentDto dto)
+            [FromBody] CustomerAppointmentDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -55,9 +56,10 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             }
         }
 
+        // Creates an unavailable part request for the logged-in customer.
         [HttpPost("part-requests")]
         public async Task<IActionResult> RequestUnavailablePart(
-            [FromBody] CreatePartRequestDto dto)
+            [FromBody] CustomerPartRequestDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -88,9 +90,10 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             }
         }
 
+        // Submits a review for completed appointment.
         [HttpPost("reviews")]
         public async Task<IActionResult> SubmitReview(
-            [FromBody] CreateReviewDto dto)
+            [FromBody] CustomerReviewDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -121,11 +124,80 @@ namespace VehicleInventoryManagementSystem.API.Controllers
             }
         }
 
+        // Get vehicles owned by the logged-in customer.
+        [HttpGet("vehicles")]
+        public async Task<IActionResult> GetVehicles()
+        {
+            var userId = GetLoggedInUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid customer token." });
+
+            var vehicles = await _customerSelfService.GetVehiclesAsync(userId);
+            return Ok(vehicles);
+        }
+
+        // Gets all appointments of the logged-in customer.
+        [HttpGet("appointments")]
+        public async Task<IActionResult> GetAppointments()
+        {
+            var userId = GetLoggedInUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid customer token." });
+
+            var appointments = await _customerSelfService.GetAppointmentsAsync(userId);
+            return Ok(appointments);
+        }
+
+        // Gets all unavailable part requests of the logged-in customer.
+        [HttpGet("part-requests")]
+        public async Task<IActionResult> GetPartRequests()
+        {
+            var userId = GetLoggedInUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid customer token." });
+
+            var requests = await _customerSelfService.GetPartRequestsAsync(userId);
+            return Ok(requests);
+        }
+
+        // Gets completed appointments for review dropdown.
+        [HttpGet("appointments/completed")]
+        public async Task<IActionResult> GetCompletedAppointments()
+        {
+            var userId = GetLoggedInUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid customer token." });
+
+            var appointments = await _customerSelfService
+                .GetCompletedAppointmentsAsync(userId);
+
+            return Ok(appointments);
+        }
+
+        // Gets reviews submitted by the logged-in customer.
+        [HttpGet("reviews")]
+        public async Task<IActionResult> GetReviews()
+        {
+            var userId = GetLoggedInUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { message = "Invalid customer token." });
+
+            var reviews = await _customerSelfService.GetReviewsAsync(userId);
+            return Ok(reviews);
+        }
+
+        // Reads logged-in user's ID from JWT token.
         private string? GetLoggedInUserId()
         {
             return User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
+        // Converts service validation messages into BadRequest responses.
         private static bool IsValidationError(string result)
         {
             return result != "Appointment booked successfully." &&
