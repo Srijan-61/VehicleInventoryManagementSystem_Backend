@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  # 1. Your React Frontend
+  frontend:
+    image: srijan61/vehicle-frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+  # 2. Your .NET Backend
+  api:
+    image: srijan61/vehicle-inventory-api:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # PASTE YOUR NEON DB STRING BELOW:
+      - ConnectionStrings__DefaultConnection=Host=ep-red-poetry-ao2btqgi-pooler.c-2.ap-southeast-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_jA1nYsBbgvI0;SSL Mode=Require;Trust Server Certificate=true;
