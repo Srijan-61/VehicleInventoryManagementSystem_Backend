@@ -81,6 +81,10 @@ builder.Services.AddScoped<ICustomerSearchService, CustomerSearchService>();
 builder.Services.AddScoped<ICustomerRegistrationRepository, CustomerRegistrationRepository>();
 builder.Services.AddScoped<ICustomerRegistrationService, CustomerRegistrationService>();
 
+// Customer Feature (Feature 14)
+builder.Services.AddScoped<ICustomerFeatureRepository, CustomerFeatureRepository>();
+builder.Services.AddScoped<ICustomerFeatureService, CustomerFeatureService>();
+
 // Sales feature
 builder.Services.AddScoped<ISalesFeatureRepository, SalesFeatureRepository>();
 builder.Services.AddScoped<ISalesFeatureService, SalesFeatureService>();
