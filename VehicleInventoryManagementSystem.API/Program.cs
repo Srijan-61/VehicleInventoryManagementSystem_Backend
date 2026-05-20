@@ -114,15 +114,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// CORS configuration
+// CORS configuration - Allow both frontend ports
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:1234")
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowAnyHeader();
     });
 });
 
@@ -134,15 +133,15 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// Global Exception Handler - catches any unhandled exception and returns a standardized JSON error response
+// Global Exception Handler
 app.UseMiddleware<VehicleInventoryManagementSystem.API.Middlewares.GlobalExceptionMiddleware>();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontend");
+// Use CORS - THIS MUST BE BEFORE Authentication
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();
